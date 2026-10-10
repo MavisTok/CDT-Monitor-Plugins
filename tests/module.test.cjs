@@ -9,10 +9,13 @@ vm.runInNewContext(fs.readFileSync(require.resolve('../src/module-config.js'), '
 const source = fs.readFileSync(require.resolve('../CDT-Monitor.sgmodule'), 'utf8');
 const moduleNames = ['CDT-Monitor.sgmodule', 'CDT-Monitor-Mac.sgmodule', 'CDT-Monitor-Local.sgmodule', 'CDT-Monitor-Local-Mac.sgmodule'];
 
-test('all module metadata fields are declared once and propagated to every runtime script', async () => {
+test('module metadata starts at byte zero and fields propagate to every runtime script', async () => {
   const { defaultsFromModule, scriptArgument } = await import('../tools/module-format.mjs');
   for (const name of moduleNames) {
     const module = fs.readFileSync(require.resolve('../' + name), 'utf8');
+    assert.match(module, /^#!name=CDT Monitor 本地版\n#!desc=v\d+\.\d+\.\d+ .+\n/, name);
+    const header = module.split('\n\n')[0].split('\n');
+    assert.ok(header.every(line => line.startsWith('#!')), name + ': uninterrupted metadata header');
     assert.deepEqual({ ...defaultsFromModule(module) }, defaults, name);
     for (const script of ['CDT-Panel', 'CDT-Monitor', 'CDT-Refresh', 'CDT-Control', 'CDT-History', 'CDT-Notify-Test']) {
       const argument = scriptArgument(module, script, { access_key_id: 'testAK', access_key_secret: 'testSecret' });

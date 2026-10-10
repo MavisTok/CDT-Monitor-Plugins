@@ -28,10 +28,11 @@ fs.chmodSync(setupPath, 0o600);
 
 function makeModule(scriptRoot, ios) {
   const monitor = scriptRoot + 'cdt-monitor.js', setup = scriptRoot + 'cdt-setup.js';
+  const platform = ios ? '' : '#!system=mac\n';
   const wake = ios ? ',wake-system=true' : '';
   const metadata = parameters.map(p => p.key + (p.default === '' ? '' : ':' + p.default)).join(',');
   const argument = op => 'cdt-module-v1|op=' + op + '|' + parameters.map(p => p.key + '={{{' + p.key + '}}}').join('|');
-  return `#!name=CDT Monitor 本地版\n#!desc=直接查询阿里云 CDT/ECS/BSS；在模块参数表中填写账号与监控设置，保存后下次执行生效。\n#!arguments=${metadata}\n#!arguments-desc=config_source=module 使用本表（单账号实例），local 使用原多账号 JSON。必填 access_key_id、access_key_secret；instance_id 留空仅监控流量。max_traffic_gib 请填实际额度。开关填写 true/false，时间填写 HH:mm；threshold_action=notify/stop，site_type=china/international。默认关闭控制。参数值不使用竖线、英文双引号或换行。\n\n[Script]\nCDT-Setup = type=generic,script-path="${setup}",timeout=10,debug=true\nCDT-Panel = type=generic,script-path="${monitor}",argument="${argument('panel')}",timeout=120\nCDT-Monitor = type=cron,cronexp="*/10 * * * *",script-path="${monitor}",argument="${argument('monitor')}",timeout=120${wake}\nCDT-Refresh = type=generic,script-path="${monitor}",argument="${argument('refresh')}",timeout=120\nCDT-History = type=generic,script-path="${monitor}",argument="${argument('history')}",timeout=10\nCDT-Notify-Test = type=generic,script-path="${monitor}",argument="${argument('test-notify')}",timeout=120\nCDT-Control = type=generic,script-path="${monitor}",argument="${argument('refresh')}",timeout=120\n\n[Panel]\nCDT Monitor = script-name=CDT-Panel,title="CDT Monitor",content="请在模块参数中填写账号",update-interval=600\n`;
+  return `#!name=CDT Monitor 本地版\n#!desc=v${pkg.version} · 直接查询阿里云 CDT/ECS/BSS；在模块参数表中填写账号与监控设置，保存后下次执行生效。\n${platform}#!arguments=${metadata}\n#!arguments-desc=config_source=module 使用本表（单账号实例），local 使用原多账号 JSON。必填 access_key_id、access_key_secret；instance_id 留空仅监控流量。max_traffic_gib 请填实际额度。开关填写 true/false，时间填写 HH:mm；threshold_action=notify/stop，site_type=china/international。默认关闭控制。参数值不使用竖线、英文双引号或换行。\n\n[Script]\nCDT-Setup = type=generic,script-path="${setup}",timeout=10,debug=true\nCDT-Panel = type=generic,script-path="${monitor}",argument="${argument('panel')}",timeout=120\nCDT-Monitor = type=cron,cronexp="*/10 * * * *",script-path="${monitor}",argument="${argument('monitor')}",timeout=120${wake}\nCDT-Refresh = type=generic,script-path="${monitor}",argument="${argument('refresh')}",timeout=120\nCDT-History = type=generic,script-path="${monitor}",argument="${argument('history')}",timeout=10\nCDT-Notify-Test = type=generic,script-path="${monitor}",argument="${argument('test-notify')}",timeout=120\nCDT-Control = type=generic,script-path="${monitor}",argument="${argument('refresh')}",timeout=120\n\n[Panel]\nCDT Monitor = script-name=CDT-Panel,title="CDT Monitor",content="请在模块参数中填写账号",update-interval=600\n`;
 }
 for (const [name, scriptRoot, ios] of [
   ['CDT-Monitor.sgmodule', remoteRoot, true],
@@ -39,7 +40,7 @@ for (const [name, scriptRoot, ios] of [
   ['CDT-Monitor-Local.sgmodule', '', true],
   ['CDT-Monitor-Local-Mac.sgmodule', '', false]
 ]) {
-  const header = `# Release v${pkg.version}; ${scriptRoot ? 'GitHub URL installation' : 'local files installation'}\n` + (ios ? '' : '#!system=mac\n');
-  fs.writeFileSync(path.join(root, name), header + makeModule(scriptRoot, ios));
+  // Keep the metadata at byte zero, before comments, whitespace or sections.
+  fs.writeFileSync(path.join(root, name), makeModule(scriptRoot, ios));
 }
 console.log(`Built v${pkg.version}: scripts, GitHub URL modules and portable local modules.`);

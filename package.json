@@ -1,7 +1,7 @@
 {
   "name": "cdt-monitor-surge-local",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": { "type": "git", "url": "https://github.com/MavisTok/CDT-Monitor_Surge-module.git" },
   "scripts": { "build": "node tools/build.mjs", "test": "node --test tests/*.test.cjs" },
   "license": "MIT"

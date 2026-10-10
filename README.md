@@ -8,23 +8,23 @@
 
 ## 通过 URL 快速安装
 
-**v0.3.0：在 Surge 的模块管理页选择“从 URL 安装”，粘贴对应平台的地址。** Surge 自动下载并缓存脚本，无需手动复制 JS。
+**v0.3.1：在 Surge 的模块管理页选择“从 URL 安装”，粘贴对应平台的地址。** Surge 自动下载并缓存脚本，无需手动复制 JS。
 
 | 平台 | 模块地址 |
 | --- | --- |
-| iPhone / iPad | [CDT-Monitor.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/main/CDT-Monitor.sgmodule) |
-| Mac | [CDT-Monitor-Mac.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/main/CDT-Monitor-Mac.sgmodule) |
+| iPhone / iPad | [CDT-Monitor.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/main/CDT-Monitor.sgmodule) |
+| Mac | [CDT-Monitor-Mac.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/main/CDT-Monitor-Mac.sgmodule) |
 
 **iOS：**
 
 ```text
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/main/CDT-Monitor.sgmodule
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/main/CDT-Monitor.sgmodule
 ```
 
 **Mac：**
 
 ```text
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/main/CDT-Monitor-Mac.sgmodule
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/main/CDT-Monitor-Mac.sgmodule
 ```
 
 1. 从上面的 URL 安装对应模块，打开模块参数表，保留 `config_source=module`。
@@ -40,7 +40,7 @@ https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/main/CDT-Mon
 
 ### 更新与旧版迁移
 
-安装地址使用 `main`；模块内脚本固定到对应发布标签（本版为 `v0.3.0`），避免旧参数表误用新版脚本。以后从 Surge 模块管理页更新已安装模块，再检查参数并保存；如有下载错误，在外部资源管理中重新下载脚本。发布标签不覆盖，版本升级会使用新标签。固定版本安装可将上述地址中的 `/main/` 改为 `/v0.3.0/`。
+安装地址使用 `main`；模块内脚本固定到对应发布标签（本版为 `v0.3.1`），避免旧参数表误用新版脚本。以后从 Surge 模块管理页更新已安装模块，再检查参数并保存；如有下载错误，在外部资源管理中重新下载脚本。发布标签不覆盖，版本升级会使用新标签。固定版本安装可将上述地址中的 `/refs/heads/main/` 改为 `/v0.3.1/`。
 
 从 v0.1.0 / v0.2.0 本地模块迁移：先自行留存已有参数，停用旧模块，再从 URL 安装并填回参数；不要同时启用远程与本地版。已有多账号配置的用户将 `config_source` 改为 `local` 即可继续使用原配置和历史。参数表模式仍使用原有持久化 key；同一台设备保留配置来源和 `account_id` 时可继续使用原历史。两种配置来源使用独立配置/历史 key，切换不会覆盖另一种来源的数据。
 
