@@ -1,0 +1,30 @@
+{
+  "timezoneOffsetMinutes": 480,
+  "requestTimeoutSeconds": 10,
+  "allowControl": false,
+  "dailyReportTime": "21:00",
+  "notifications": {
+    "system": true,
+    "telegram": { "enabled": false, "baseURL": "https://api.telegram.org", "botToken": "", "chatId": "" },
+    "webhook": { "enabled": false, "url": "", "headers": {} }
+  },
+  "accounts": [
+    {
+      "id": "ecs-1",
+      "name": "香港 ECS",
+      "enabled": true,
+      "accessKeyId": "填写本地 RAM AccessKey ID",
+      "accessKeySecret": "填写本地 RAM AccessKey Secret",
+      "regionId": "cn-hongkong",
+      "instanceId": "i-填写实例ID",
+      "siteType": "china",
+      "maxTrafficGiB": 200,
+      "thresholdPercent": 95,
+      "thresholdAction": "notify",
+      "shutdownMode": "KeepCharging",
+      "keepAlive": false,
+      "billing": false,
+      "schedule": { "enabled": false, "start": "08:00", "stop": "23:00" }
+    }
+  ]
+}

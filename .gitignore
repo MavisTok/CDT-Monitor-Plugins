@@ -1,0 +1,9 @@
+*.private.*
+config.local.json
+*.zip
+node_modules/
+.validation.*
+.backups/
+.DS_Store
+.env
+.env.*
