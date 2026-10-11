@@ -1,13 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { releaseInfo } from './release-info.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-const repository = /^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\.git$/.exec(pkg.repository.url)?.[1];
-if (!repository || !/^\d+\.\d+\.\d+$/.test(pkg.version)) throw new Error('A GitHub repository and release version are required.');
+const release = releaseInfo(pkg);
 // Keep the parameter schema and runtime on the same release, even when main advances.
-const remoteRoot = `https://raw.githubusercontent.com/${repository}/v${pkg.version}/`;
+const remoteRoot = release.scriptRoot;
 const core = fs.readFileSync(path.join(root, 'src/core.js'), 'utf8');
 const parameters = JSON.parse(fs.readFileSync(path.join(root, 'src/module-parameters.json'), 'utf8'));
 const parameterDefaults = Object.fromEntries(parameters.map(p => [p.key, p.default]));
@@ -46,4 +46,5 @@ for (const [name, scriptRoot, ios] of [
   // Keep the metadata at byte zero, before comments, whitespace or sections.
   fs.writeFileSync(path.join(root, name), makeModule(scriptRoot, ios));
 }
-console.log(`Built v${pkg.version}: scripts, GitHub URL modules and portable local modules.`);
+fs.writeFileSync(path.join(root, 'INSTALL-URLS.txt'), `CDT Monitor 持续更新安装地址\n\niOS\n${release.install.ios}\n\nMac\n${release.install.mac}\n\n安装一次后，在原模块中使用“更新模块”。不要把版本标签地址作为日常安装来源。\n`);
+console.log(`Built v${pkg.version}: scripts, GitHub URL modules, portable local modules and stable installation URLs.`);
