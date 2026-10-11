@@ -8,7 +8,7 @@
 
 ## 通过 URL 快速安装
 
-**v0.3.1：在 Surge 的模块管理页选择“从 URL 安装”，粘贴对应平台的地址。** Surge 自动下载并缓存脚本，无需手动复制 JS。
+**v0.3.2：在 Surge 的模块管理页选择“从 URL 安装”，粘贴对应平台的地址。** Surge 自动下载并缓存脚本，无需手动复制 JS。
 
 | 平台 | 模块地址 |
 | --- | --- |
@@ -28,7 +28,7 @@ https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/m
 ```
 
 1. 从上面的 URL 安装对应模块，打开模块参数表，保留 `config_source=module`。
-2. 填写 `access_key_id`、`access_key_secret`、`region_id`、`instance_id` 和实际额度 `max_traffic_gib`。只查看流量时可不填实例 ID。
+2. 填写 `access_key_id`、`access_key_secret`、`region_id`、`instance_id` 和实际额度 `max_traffic_gib`。只查看流量时，`instance_id` 保留“未设置”。
 3. 启用并保存模块，确保脚本功能已开启，刷新 **CDT Monitor** 面板。
 4. 以后直接在模块参数表修改设置，下一次执行生效。默认只读，每 10 分钟查询一次。
 
@@ -40,7 +40,7 @@ https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/m
 
 ### 更新与旧版迁移
 
-安装地址使用 `main`；模块内脚本固定到对应发布标签（本版为 `v0.3.1`），避免旧参数表误用新版脚本。以后从 Surge 模块管理页更新已安装模块，再检查参数并保存；如有下载错误，在外部资源管理中重新下载脚本。发布标签不覆盖，版本升级会使用新标签。固定版本安装可将上述地址中的 `/refs/heads/main/` 改为 `/v0.3.1/`。
+安装地址使用 `main`；模块内脚本固定到对应发布标签（本版为 `v0.3.2`），避免旧参数表误用新版脚本。以后从 Surge 模块管理页更新已安装模块，再检查参数并保存；如有下载错误，在外部资源管理中重新下载脚本。发布标签不覆盖，版本升级会使用新标签。固定版本安装可将上述地址中的 `/refs/heads/main/` 改为 `/v0.3.2/`。
 
 从 v0.1.0 / v0.2.0 本地模块迁移：先自行留存已有参数，停用旧模块，再从 URL 安装并填回参数；不要同时启用远程与本地版。已有多账号配置的用户将 `config_source` 改为 `local` 即可继续使用原配置和历史。参数表模式仍使用原有持久化 key；同一台设备保留配置来源和 `account_id` 时可继续使用原历史。两种配置来源使用独立配置/历史 key，切换不会覆盖另一种来源的数据。
 
@@ -69,10 +69,10 @@ https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/m
 | `config_source` | `module` | module：使用本表；local：使用原本地多账号配置 |
 | `account_id` | `ecs-1` | 稳定且唯一的记录 ID |
 | `account_name` | `ECS` | 面板显示名称 |
-| `access_key_id` | 留空 | RAM AccessKey ID |
-| `access_key_secret` | 留空 | RAM AccessKey Secret |
+| `access_key_id` | `未设置` | RAM AccessKey ID |
+| `access_key_secret` | `未设置` | RAM AccessKey Secret |
 | `region_id` | `cn-hongkong` | 实例地域 |
-| `instance_id` | 留空 | 完整 ECS 实例 ID；留空仅查流量 |
+| `instance_id` | `未设置` | 完整 ECS 实例 ID；未设置则仅查流量 |
 | `site_type` | `china` | china 中国站 / international 国际站 |
 | `max_traffic_gib` | `200` | 账号分类额度，单位 GiB，请按实际额度修改 |
 | `threshold_percent` | `95` | 告警阈值百分比 |
@@ -84,19 +84,21 @@ https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/m
 | `start_time` | `08:00` | 定时启动 HH:mm |
 | `stop_time` | `23:00` | 定时停止 HH:mm |
 | `billing` | `false` | 余额与账单查询 true / false |
-| `daily_report_time` | `21:00` | 日报 HH:mm；留空关闭 |
+| `daily_report_time` | `21:00` | 日报 HH:mm；填写关闭可停用日报 |
 | `timezone_offset_minutes` | `480` | 业务时区相对 UTC 的分钟偏移 |
 | `request_timeout_seconds` | `10` | 请求超时 3–15 秒 |
 | `system_notification` | `true` | 系统通知 true / false |
 | `telegram_enabled` | `false` | Telegram 通知 true / false |
 | `telegram_base_url` | `https://api.telegram.org` | Telegram HTTPS API 或反代地址 |
-| `telegram_bot_token` | 留空 | Telegram Bot Token |
-| `telegram_chat_id` | 留空 | Telegram 接收者 Chat ID |
+| `telegram_bot_token` | `未设置` | Telegram Bot Token |
+| `telegram_chat_id` | `未设置` | Telegram 接收者 Chat ID |
 | `webhook_enabled` | `false` | Webhook 通知 true / false |
-| `webhook_url` | 留空 | Webhook HTTPS 地址 |
-| `webhook_authorization` | 留空 | Webhook Authorization 请求头；无需认证时留空 |
+| `webhook_url` | `未设置` | Webhook HTTPS 地址 |
+| `webhook_authorization` | `未设置` | Webhook Authorization 请求头；无需认证时保留未设置 |
 
 <!-- MODULE_PARAMETER_TABLE_END -->
+
+**首次安装：把 `access_key_id` 和 `access_key_secret` 的“未设置”替换为自己的 RAM 密钥。未使用的实例、Telegram 和 Webhook 选项保留“未设置”，不要直接清空输入框。** 这是空值的保留写法，脚本会将它还原为空；Surge 因而能完成所有参数替换。未填写任一密钥时，面板提示“尚未配置”，不请求阿里云、不使用旧密钥缓存。关闭日报请将 `daily_report_time` 填为“关闭”；高级 JSON 模式仍使用空字符串。
 
 参数值支持中文、空格、逗号、`&`、`+`、`=` 和字面百分号，无需 URL 编码。由于 Surge 采用文本替换，值中不要使用竖线 `|`、英文双引号或换行；特殊配置可使用高级本地 JSON 模式。
 

@@ -53,6 +53,38 @@ async function moduleArgument(overrides = {}, name = 'CDT-Panel') {
 test('unconfigured runtime has no network requests', async () => {
   const r = await run({ c: null }); assert.equal(r.requests.length, 0); assert.match(r.result.title, /尚未配置/);
 });
+test('first install and either missing module key never use cached credentials or send requests', async () => {
+  const { scriptArgument } = await import('../tools/module-format.mjs');
+  const source = fs.readFileSync(require.resolve('../CDT-Monitor.sgmodule'), 'utf8');
+  const fresh = await run({ c: null, argument: scriptArgument(source, 'CDT-Panel') });
+  assert.match(fresh.result.title, /尚未配置/);
+  assert.equal(fresh.requests.length, 0); assert.equal(fresh.store.size, 0);
+  const store = storage(config());
+  await run({ store, argument: await moduleArgument() });
+  for (const values of [{ access_key_id: '未设置' }, { access_key_secret: '未设置' }]) {
+    const before = [...store.entries()];
+    const r = await run({ store, argument: await moduleArgument({ allow_control: 'true', threshold_action: 'stop', ...values }, 'CDT-Monitor'), intent: { op: 'stop', account: 'ecs-1', confirm: 'i-test' } });
+    assert.match(r.result.title, /尚未配置/);
+    assert.equal(r.requests.length, 0); assert.equal(r.notifications.length, 0);
+    assert.deepEqual([...store.entries()], before);
+  }
+});
+test('only RAM keys are needed for traffic monitoring; unused optional values are not persisted', async () => {
+  const r = await run({ c: null, argument: await moduleArgument({ instance_id: '未设置', daily_report_time: '关闭' }) });
+  assert.deepEqual(r.requests.map(r => r.params.Action), ['ListCdtInternetTraffic']);
+  const saved = JSON.parse(r.store.get('cdt.local.module-config.v1'));
+  assert.equal(saved.accounts[0].instanceId, '');
+  assert.equal(saved.dailyReportTime, '');
+  assert.equal(saved.notifications.telegram.botToken, '');
+  assert.equal(saved.notifications.webhook.url, '');
+  assert.deepEqual(saved.notifications.webhook.headers, {});
+});
+test('enabling notifications without replacing required placeholders fails before network access', async () => {
+  for (const values of [{ telegram_enabled: 'true' }, { webhook_enabled: 'true' }]) {
+    const r = await run({ c: null, argument: await moduleArgument(values) });
+    assert.equal(r.result.style, 'error'); assert.equal(r.requests.length, 0); assert.equal(r.store.size, 0);
+  }
+});
 test('panel queries exact ECS ID and does not perform control or notifications', async () => {
   const c = config({ allowControl: true }); c.accounts[0].thresholdAction = 'stop';
   const r = await run({ c, handler: p => p.Action === 'ListCdtInternetTraffic' ? { json: { RequestId: 'mock', TrafficDetails: [{ BusinessRegionId: 'cn-hongkong', Traffic: C.GiB * 96 }] } } : undefined });
@@ -199,7 +231,7 @@ test('invalid edited module parameters fail closed, never using previous control
 });
 test('local source keeps multi-account configuration authoritative', async () => {
   const c = config(); c.accounts.push({ ...c.accounts[0], id: 'other', instanceId: '' });
-  const r = await run({ c, argument: await moduleArgument({ config_source: 'local', max_traffic_gib: '1' }) });
+  const r = await run({ c, argument: await moduleArgument({ config_source: 'local', max_traffic_gib: '1', access_key_id: '未设置', access_key_secret: '未设置' }) });
   assert.match(r.result.content, /100 GiB/);
   assert.equal(Object.keys(r.state.accounts).length, 2);
   assert.equal(r.store.has('cdt.local.module-config.v1'), false);

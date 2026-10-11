@@ -17,6 +17,7 @@ test('module metadata starts at byte zero and fields propagate to every runtime 
     const header = module.split('\n\n')[0].split('\n');
     assert.ok(header.every(line => line.startsWith('#!')), name + ': uninterrupted metadata header');
     assert.deepEqual({ ...defaultsFromModule(module) }, defaults, name);
+    assert.ok(Object.values(defaultsFromModule(module)).every(value => typeof value === 'string' && value.length > 0), name + ': no missing argument defaults');
     for (const script of ['CDT-Panel', 'CDT-Monitor', 'CDT-Refresh', 'CDT-Control', 'CDT-History', 'CDT-Notify-Test']) {
       const argument = scriptArgument(module, script, { access_key_id: 'testAK', access_key_secret: 'testSecret' });
       const parsed = C.parseModuleArguments(argument);
@@ -45,7 +46,7 @@ test('parameter transport preserves URL queries, punctuation, Unicode and empty 
   const { scriptArgument } = await import('../tools/module-format.mjs');
   const argument = scriptArgument(source, 'CDT-Panel', {
     access_key_id: 'testAK', access_key_secret: 'a+/=&%20secret', account_name: '香港 ECS, 100% & A=B',
-    webhook_enabled: 'true', webhook_url: 'https://example.invalid/hook?a=1&b=x%20y+z', webhook_authorization: 'Bearer abc+/=', daily_report_time: ''
+    webhook_enabled: 'true', webhook_url: 'https://example.invalid/hook?a=1&b=x%20y+z', webhook_authorization: 'Bearer abc+/=', daily_report_time: '关闭'
   });
   const config = C.parseModuleArguments(argument).config;
   assert.equal(config.accounts[0].accessKeySecret, 'a+/=&%20secret');
@@ -53,6 +54,20 @@ test('parameter transport preserves URL queries, punctuation, Unicode and empty 
   assert.equal(config.notifications.webhook.url, 'https://example.invalid/hook?a=1&b=x%20y+z');
   assert.equal(config.notifications.webhook.headers.Authorization, 'Bearer abc+/=');
   assert.equal(config.dailyReportTime, '');
+});
+test('only complete reserved optional values are cleared; required empty substitutions fail validation', async () => {
+  const { scriptArgument, renderModule } = await import('../tools/module-format.mjs');
+  const parsed = C.parseModuleArguments(scriptArgument(source, 'CDT-Panel', {
+    access_key_id: 'testAK', access_key_secret: 'abc未设置XYZ', account_name: '未设置', daily_report_time: '关闭'
+  })).config;
+  assert.equal(parsed.accounts[0].accessKeySecret, 'abc未设置XYZ');
+  assert.equal(parsed.accounts[0].name, '未设置');
+  assert.equal(parsed.accounts[0].instanceId, '');
+  assert.equal(parsed.notifications.telegram.botToken, '');
+  assert.equal(parsed.notifications.webhook.url, '');
+  assert.deepEqual(Object.keys(parsed.notifications.webhook.headers), []);
+  assert.equal(parsed.dailyReportTime, '');
+  assert.throws(() => renderModule(source, { access_key_secret: '' }), /Missing module argument value/);
 });
 test('malformed parameter payloads and unresolved placeholders cannot enable control', async () => {
   const { scriptArgument } = await import('../tools/module-format.mjs');

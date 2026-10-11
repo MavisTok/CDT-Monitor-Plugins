@@ -19,10 +19,11 @@ for (const name of ['CDT-Monitor.sgmodule', 'CDT-Monitor-Mac.sgmodule', 'CDT-Mon
 // changes, no writes to Surge storage and no outbound requests are possible.
 const smoke = path.join(root, '.validation.smoke.js');
 const source = fs.readFileSync(path.join(root, 'cdt-monitor.js'), 'utf8');
-fs.writeFileSync(smoke, `(function ($persistentStore, $httpClient, $notification, $argument, $input, $intent, $trigger) {\n${source}\n})({ read: function () { return null; }, write: function () { throw new Error('Unexpected storage write'); } }, { post: function () { throw new Error('Unexpected HTTP request'); } }, { post: function () { throw new Error('Unexpected notification'); } }, 'op=panel', null, null, 'editor');\n`);
+const initialArgument = scriptArgument(fs.readFileSync(path.join(root, 'CDT-Monitor-Mac.sgmodule'), 'utf8'), 'CDT-Panel');
+fs.writeFileSync(smoke, `(function ($persistentStore, $httpClient, $notification, $argument, $input, $intent, $trigger) {\n${source}\n})({ read: function () { return null; }, write: function () { throw new Error('Unexpected storage write'); } }, { post: function () { throw new Error('Unexpected HTTP request'); } }, { post: function () { throw new Error('Unexpected notification'); } }, ${JSON.stringify(initialArgument)}, null, null, 'editor');\n`);
 const evaluated = spawnSync(cli, ['script', 'evaluate', smoke, 'generic', '10'], { encoding: 'utf8', timeout: 20000 });
 process.stdout.write('Native Surge smoke test:\n' + evaluated.stdout + evaluated.stderr);
-if (evaluated.status !== 0) process.exit(1);
+if (evaluated.status !== 0 || !evaluated.stdout.includes('尚未配置')) process.exit(1);
 const configuredSmoke = path.join(root, '.validation.configured-smoke.js');
 const fakeConfig = { allowControl: true, accounts: [{ id: 'native-test', name: '原生模拟实例', accessKeyId: 'FAKEKEY', accessKeySecret: 'FAKESECRET', regionId: 'cn-hongkong', instanceId: 'i-fake', maxTrafficGiB: 100, thresholdAction: 'stop' }], notifications: { system: false } };
 const nativeModuleArgument = scriptArgument(fs.readFileSync(path.join(root, 'CDT-Monitor-Mac.sgmodule'), 'utf8'), 'CDT-Monitor', {

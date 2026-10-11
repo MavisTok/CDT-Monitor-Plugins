@@ -14,9 +14,14 @@ CDT.parseModuleArguments = function (argument) {
   });
   Object.keys(MODULE_PARAMETER_DEFAULTS).forEach(function (key) {
     if (values[key] === undefined) values[key] = MODULE_PARAMETER_DEFAULTS[key];
+    // Surge must substitute a nonempty value even for disabled optional features.
+    // Decode only the full reserved value, and only on fields with this default.
+    if (MODULE_PARAMETER_DEFAULTS[key] === '未设置' && values[key] === '未设置') values[key] = '';
   });
   CDT.assert(values.config_source === 'module' || values.config_source === 'local', 'config_source 必须为 module 或 local');
   if (values.config_source === 'local') return { op: values.op || 'panel', source: 'local', config: null };
+  if (!values.access_key_id || !values.access_key_secret) return { op: values.op || 'panel', source: 'module', config: null, unconfigured: true };
+  if (values.daily_report_time === '关闭') values.daily_report_time = '';
   function boolean(key) {
     CDT.assert(values[key] === 'true' || values[key] === 'false', key + ' 必须填写 true 或 false');
     return values[key] === 'true';

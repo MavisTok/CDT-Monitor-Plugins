@@ -224,7 +224,7 @@ var CDT = (function () {
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CDT;
 
-var MODULE_PARAMETER_DEFAULTS = {"config_source":"module","account_id":"ecs-1","account_name":"ECS","access_key_id":"","access_key_secret":"","region_id":"cn-hongkong","instance_id":"","site_type":"china","max_traffic_gib":"200","threshold_percent":"95","allow_control":"false","threshold_action":"notify","shutdown_mode":"KeepCharging","keep_alive":"false","schedule_enabled":"false","start_time":"08:00","stop_time":"23:00","billing":"false","daily_report_time":"21:00","timezone_offset_minutes":"480","request_timeout_seconds":"10","system_notification":"true","telegram_enabled":"false","telegram_base_url":"https://api.telegram.org","telegram_bot_token":"","telegram_chat_id":"","webhook_enabled":"false","webhook_url":"","webhook_authorization":""};
+var MODULE_PARAMETER_DEFAULTS = {"config_source":"module","account_id":"ecs-1","account_name":"ECS","access_key_id":"未设置","access_key_secret":"未设置","region_id":"cn-hongkong","instance_id":"未设置","site_type":"china","max_traffic_gib":"200","threshold_percent":"95","allow_control":"false","threshold_action":"notify","shutdown_mode":"KeepCharging","keep_alive":"false","schedule_enabled":"false","start_time":"08:00","stop_time":"23:00","billing":"false","daily_report_time":"21:00","timezone_offset_minutes":"480","request_timeout_seconds":"10","system_notification":"true","telegram_enabled":"false","telegram_base_url":"https://api.telegram.org","telegram_bot_token":"未设置","telegram_chat_id":"未设置","webhook_enabled":"false","webhook_url":"未设置","webhook_authorization":"未设置"};
 /* Parameter transport uses | separators, not query-string decoding: URLs with &,
  * tokens with +/= and literal percent signs remain intact after Surge substitution.
  * MODULE_PARAMETER_DEFAULTS is generated from module-parameters.json at build time. */
@@ -241,9 +241,14 @@ CDT.parseModuleArguments = function (argument) {
   });
   Object.keys(MODULE_PARAMETER_DEFAULTS).forEach(function (key) {
     if (values[key] === undefined) values[key] = MODULE_PARAMETER_DEFAULTS[key];
+    // Surge must substitute a nonempty value even for disabled optional features.
+    // Decode only the full reserved value, and only on fields with this default.
+    if (MODULE_PARAMETER_DEFAULTS[key] === '未设置' && values[key] === '未设置') values[key] = '';
   });
   CDT.assert(values.config_source === 'module' || values.config_source === 'local', 'config_source 必须为 module 或 local');
   if (values.config_source === 'local') return { op: values.op || 'panel', source: 'local', config: null };
+  if (!values.access_key_id || !values.access_key_secret) return { op: values.op || 'panel', source: 'module', config: null, unconfigured: true };
+  if (values.daily_report_time === '关闭') values.daily_report_time = '';
   function boolean(key) {
     CDT.assert(values[key] === 'true' || values[key] === 'false', key + ' 必须填写 true 或 false');
     return values[key] === 'true';
@@ -593,6 +598,10 @@ CDT.parseModuleArguments = function (argument) {
   async function main() {
     var argument = typeof $argument === 'undefined' ? '' : $argument;
     moduleSettings = CDT.parseModuleArguments(argument);
+    if (moduleSettings && moduleSettings.unconfigured) {
+      finish({ title: 'CDT Monitor · 尚未配置', content: '请在模块参数中将 access_key_id 和 access_key_secret 的“未设置”替换为自己的 RAM 密钥，保存后刷新面板。未使用的可选项保留“未设置”。', style: 'info' });
+      return;
+    }
     args = moduleSettings ? { op: moduleSettings.op } : parseArgs(argument);
     if (typeof $intent !== 'undefined' && $intent && $intent.parameter) {
       var input = $intent.parameter;

@@ -314,6 +314,10 @@
   async function main() {
     var argument = typeof $argument === 'undefined' ? '' : $argument;
     moduleSettings = CDT.parseModuleArguments(argument);
+    if (moduleSettings && moduleSettings.unconfigured) {
+      finish({ title: 'CDT Monitor · 尚未配置', content: '请在模块参数中将 access_key_id 和 access_key_secret 的“未设置”替换为自己的 RAM 密钥，保存后刷新面板。未使用的可选项保留“未设置”。', style: 'info' });
+      return;
+    }
     args = moduleSettings ? { op: moduleSettings.op } : parseArgs(argument);
     if (typeof $intent !== 'undefined' && $intent && $intent.parameter) {
       var input = $intent.parameter;
