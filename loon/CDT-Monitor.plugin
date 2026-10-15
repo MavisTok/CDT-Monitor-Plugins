@@ -1,0 +1,46 @@
+#!name=CDT Monitor
+#!desc=v0.4.0 · 阿里云 CDT/ECS/BSS 本地监控；默认只读。
+#!loon_version=3.5.1(983)
+
+[Argument]
+config_source = input,"module",type=string,tag=config_source
+account_id = input,"ecs-1",type=string,tag=account_id
+account_name = input,"ECS",type=string,tag=account_name
+access_key_id = input,"未设置",type=string,tag=access_key_id
+access_key_secret = input,"未设置",type=string,tag=access_key_secret
+region_id = input,"cn-hongkong",type=string,tag=region_id
+instance_id = input,"未设置",type=string,tag=instance_id
+site_type = input,"china",type=string,tag=site_type
+max_traffic_gib = input,"200",type=string,tag=max_traffic_gib
+threshold_percent = input,"95",type=string,tag=threshold_percent
+allow_control = input,"false",type=string,tag=allow_control
+threshold_action = input,"notify",type=string,tag=threshold_action
+shutdown_mode = input,"KeepCharging",type=string,tag=shutdown_mode
+keep_alive = input,"false",type=string,tag=keep_alive
+schedule_enabled = input,"false",type=string,tag=schedule_enabled
+start_time = input,"08:00",type=string,tag=start_time
+stop_time = input,"23:00",type=string,tag=stop_time
+billing = input,"false",type=string,tag=billing
+daily_report_time = input,"21:00",type=string,tag=daily_report_time
+timezone_offset_minutes = input,"480",type=string,tag=timezone_offset_minutes
+request_timeout_seconds = input,"10",type=string,tag=request_timeout_seconds
+system_notification = input,"true",type=string,tag=system_notification
+telegram_enabled = input,"false",type=string,tag=telegram_enabled
+telegram_base_url = input,"https://api.telegram.org",type=string,tag=telegram_base_url
+telegram_bot_token = input,"未设置",type=string,tag=telegram_bot_token
+telegram_chat_id = input,"未设置",type=string,tag=telegram_chat_id
+webhook_enabled = input,"false",type=string,tag=webhook_enabled
+webhook_url = input,"未设置",type=string,tag=webhook_url
+webhook_authorization = input,"未设置",type=string,tag=webhook_authorization
+control_account = input,"ecs-1",tag=手动控制账号ID
+control_confirm = input,"未设置",tag=手动控制完整实例ID
+config_json = input,"",tag=高级多账号JSON,desc=仅手动运行CDT-Setup时导入
+
+[Script]
+cron "*/10 * * * *" then script("https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/v0.4.0/loon/cdt-monitor.js", {${config_source}, ${account_id}, ${account_name}, ${access_key_id}, ${access_key_secret}, ${region_id}, ${instance_id}, ${site_type}, ${max_traffic_gib}, ${threshold_percent}, ${allow_control}, ${threshold_action}, ${shutdown_mode}, ${keep_alive}, ${schedule_enabled}, ${start_time}, ${stop_time}, ${billing}, ${daily_report_time}, ${timezone_offset_minutes}, ${request_timeout_seconds}, ${system_notification}, ${telegram_enabled}, ${telegram_base_url}, ${telegram_bot_token}, ${telegram_chat_id}, ${webhook_enabled}, ${webhook_url}, ${webhook_authorization}}) with tag="CDT-Monitor", timeout=120
+generic then script("https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/v0.4.0/loon/cdt-monitor.js", {${config_source}, ${account_id}, ${account_name}, ${access_key_id}, ${access_key_secret}, ${region_id}, ${instance_id}, ${site_type}, ${max_traffic_gib}, ${threshold_percent}, ${allow_control}, ${threshold_action}, ${shutdown_mode}, ${keep_alive}, ${schedule_enabled}, ${start_time}, ${stop_time}, ${billing}, ${daily_report_time}, ${timezone_offset_minutes}, ${request_timeout_seconds}, ${system_notification}, ${telegram_enabled}, ${telegram_base_url}, ${telegram_bot_token}, ${telegram_chat_id}, ${webhook_enabled}, ${webhook_url}, ${webhook_authorization}}) with tag="CDT-Refresh", timeout=120
+generic then script("https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/v0.4.0/loon/cdt-monitor.js", {${config_source}, ${account_id}, ${account_name}, ${access_key_id}, ${access_key_secret}, ${region_id}, ${instance_id}, ${site_type}, ${max_traffic_gib}, ${threshold_percent}, ${allow_control}, ${threshold_action}, ${shutdown_mode}, ${keep_alive}, ${schedule_enabled}, ${start_time}, ${stop_time}, ${billing}, ${daily_report_time}, ${timezone_offset_minutes}, ${request_timeout_seconds}, ${system_notification}, ${telegram_enabled}, ${telegram_base_url}, ${telegram_bot_token}, ${telegram_chat_id}, ${webhook_enabled}, ${webhook_url}, ${webhook_authorization}}) with tag="CDT-History", timeout=120
+generic then script("https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/v0.4.0/loon/cdt-monitor.js", {${config_source}, ${account_id}, ${account_name}, ${access_key_id}, ${access_key_secret}, ${region_id}, ${instance_id}, ${site_type}, ${max_traffic_gib}, ${threshold_percent}, ${allow_control}, ${threshold_action}, ${shutdown_mode}, ${keep_alive}, ${schedule_enabled}, ${start_time}, ${stop_time}, ${billing}, ${daily_report_time}, ${timezone_offset_minutes}, ${request_timeout_seconds}, ${system_notification}, ${telegram_enabled}, ${telegram_base_url}, ${telegram_bot_token}, ${telegram_chat_id}, ${webhook_enabled}, ${webhook_url}, ${webhook_authorization}}) with tag="CDT-Notify-Test", timeout=120
+generic then script("https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/v0.4.0/loon/cdt-monitor.js", {${config_source}, ${account_id}, ${account_name}, ${access_key_id}, ${access_key_secret}, ${region_id}, ${instance_id}, ${site_type}, ${max_traffic_gib}, ${threshold_percent}, ${allow_control}, ${threshold_action}, ${shutdown_mode}, ${keep_alive}, ${schedule_enabled}, ${start_time}, ${stop_time}, ${billing}, ${daily_report_time}, ${timezone_offset_minutes}, ${request_timeout_seconds}, ${system_notification}, ${telegram_enabled}, ${telegram_base_url}, ${telegram_bot_token}, ${telegram_chat_id}, ${webhook_enabled}, ${webhook_url}, ${webhook_authorization}, ${control_account}, ${control_confirm}}) with tag="CDT-Start", timeout=120
+generic then script("https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/v0.4.0/loon/cdt-monitor.js", {${config_source}, ${account_id}, ${account_name}, ${access_key_id}, ${access_key_secret}, ${region_id}, ${instance_id}, ${site_type}, ${max_traffic_gib}, ${threshold_percent}, ${allow_control}, ${threshold_action}, ${shutdown_mode}, ${keep_alive}, ${schedule_enabled}, ${start_time}, ${stop_time}, ${billing}, ${daily_report_time}, ${timezone_offset_minutes}, ${request_timeout_seconds}, ${system_notification}, ${telegram_enabled}, ${telegram_base_url}, ${telegram_bot_token}, ${telegram_chat_id}, ${webhook_enabled}, ${webhook_url}, ${webhook_authorization}, ${control_account}, ${control_confirm}}) with tag="CDT-Stop", timeout=120
+generic then script("https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/v0.4.0/loon/cdt-setup.js", {${config_json}}) with tag="CDT-Setup", timeout=10

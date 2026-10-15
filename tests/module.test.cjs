@@ -6,13 +6,13 @@ const C = require('../src/core.js');
 const parameters = require('../src/module-parameters.json');
 const defaults = Object.fromEntries(parameters.map(p => [p.key, p.default]));
 vm.runInNewContext(fs.readFileSync(require.resolve('../src/module-config.js'), 'utf8'), { CDT: C, MODULE_PARAMETER_DEFAULTS: defaults });
-const source = fs.readFileSync(require.resolve('../CDT-Monitor.sgmodule'), 'utf8');
+const source = fs.readFileSync(require.resolve('../surge/CDT-Monitor.sgmodule'), 'utf8');
 const moduleNames = ['CDT-Monitor.sgmodule', 'CDT-Monitor-Mac.sgmodule', 'CDT-Monitor-Local.sgmodule', 'CDT-Monitor-Local-Mac.sgmodule'];
 
 test('module metadata starts at byte zero and fields propagate to every runtime script', async () => {
   const { defaultsFromModule, scriptArgument } = await import('../tools/module-format.mjs');
   for (const name of moduleNames) {
-    const module = fs.readFileSync(require.resolve('../' + name), 'utf8');
+    const module = fs.readFileSync(require.resolve('../surge/' + name), 'utf8');
     assert.match(module, /^#!name=CDT Monitor 本地版\n#!desc=v\d+\.\d+\.\d+ .+\n/, name);
     const header = module.split('\n\n')[0].split('\n');
     assert.ok(header.every(line => line.startsWith('#!')), name + ': uninterrupted metadata header');
@@ -30,13 +30,13 @@ test('installable modules use release-pinned GitHub scripts; local variants rema
   const pkg = require('../package.json');
   const repo = pkg.repository.url.replace('https://github.com/', '').replace(/\.git$/, '');
   for (const name of moduleNames) {
-    const module = fs.readFileSync(require.resolve('../' + name), 'utf8');
+    const module = fs.readFileSync(require.resolve('../surge/' + name), 'utf8');
     const scripts = [...module.matchAll(/script-path="([^"]+)"/g)].map(match => match[1]);
     assert.equal(scripts.length, 7, name);
     for (const script of scripts) {
       const file = script.endsWith('cdt-setup.js') ? 'cdt-setup.js' : 'cdt-monitor.js';
-      assert.equal(script, name.includes('-Local') ? file : `https://raw.githubusercontent.com/${repo}/v${pkg.version}/${file}`, name);
-      assert.ok(fs.existsSync(require.resolve('../' + file)));
+      assert.equal(script, name.includes('-Local') ? file : `https://raw.githubusercontent.com/${repo}/v${pkg.version}/surge/${file}`, name);
+      assert.ok(fs.existsSync(require.resolve('../surge/' + file)));
     }
     assert.equal(module.includes('wake-system=true'), !name.includes('-Mac'), name);
     assert.equal(module.includes('#!system=mac'), name.includes('-Mac'), name);

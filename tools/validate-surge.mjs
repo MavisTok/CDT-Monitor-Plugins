@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { renderModule, scriptArgument } from './module-format.mjs';
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../surge');
 const cli = '/Applications/Surge.app/Contents/Applications/surge-cli';
 if (!fs.existsSync(cli)) throw new Error('Surge Mac CLI is not installed; Node tests remain available.');
 for (const name of ['CDT-Monitor.sgmodule', 'CDT-Monitor-Mac.sgmodule', 'CDT-Monitor-Local.sgmodule', 'CDT-Monitor-Local-Mac.sgmodule']) {

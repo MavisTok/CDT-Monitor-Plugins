@@ -4,13 +4,13 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const crypto = require('node:crypto');
 const C = require('../src/core.js');
-const runtime = fs.readFileSync(require.resolve('../cdt-monitor.js'), 'utf8');
-const setup = fs.readFileSync(require.resolve('../cdt-setup.js'), 'utf8');
+const runtime = fs.readFileSync(require.resolve('../surge/cdt-monitor.js'), 'utf8');
+const setup = fs.readFileSync(require.resolve('../surge/cdt-setup.js'), 'utf8');
 function config(extra = {}) {
   return C.validate({ allowControl: false, ...extra, accounts: extra.accounts || [{ id: 'hk', name: '香港', accessKeyId: 'testAK', accessKeySecret: 'testSecret', regionId: 'cn-hongkong', instanceId: 'i-test', maxTrafficGiB: 100 }] });
 }
 function storage(c) { return new Map(c ? [[C.CONFIG_KEY, JSON.stringify(c)]] : []); }
-async function run({ c = config(), store = storage(c), op = 'panel', argument, handler, intent, trigger = 'editor', source = runtime, writeFail = false, input } = {}) {
+async function run({ c = config(), store = storage(c), op = 'panel', argument, handler, intent, trigger = 'editor', source = runtime, writeFail = false, input, loonName } = {}) {
   const requests = [], notifications = [], logs = [], timers = new Set();
   let calls = 0;
   const result = await new Promise((resolve, reject) => {
@@ -18,6 +18,8 @@ async function run({ c = config(), store = storage(c), op = 'panel', argument, h
     const globals = {
       $argument: argument === undefined ? 'op=' + op : argument, $trigger: trigger, $input: input,
       $intent: intent ? { parameter: intent } : undefined,
+      $loon: loonName ? 'Test Loon' : undefined,
+      $script: loonName ? { name: loonName } : undefined,
       $persistentStore: { read: key => store.get(key) ?? null, write: (value, key) => { if (writeFail) return false; if (value === null) store.delete(key); else store.set(key, value); return true; } },
       $notification: { post: (...v) => notifications.push(v) },
       $httpClient: { post: (options, callback) => {
@@ -48,14 +50,14 @@ async function run({ c = config(), store = storage(c), op = 'panel', argument, h
 }
 async function moduleArgument(overrides = {}, name = 'CDT-Panel') {
   const { scriptArgument } = await import('../tools/module-format.mjs');
-  return scriptArgument(fs.readFileSync(require.resolve('../CDT-Monitor.sgmodule'), 'utf8'), name, { access_key_id: 'testAK', access_key_secret: 'testSecret', instance_id: 'i-test', ...overrides });
+  return scriptArgument(fs.readFileSync(require.resolve('../surge/CDT-Monitor.sgmodule'), 'utf8'), name, { access_key_id: 'testAK', access_key_secret: 'testSecret', instance_id: 'i-test', ...overrides });
 }
 test('unconfigured runtime has no network requests', async () => {
   const r = await run({ c: null }); assert.equal(r.requests.length, 0); assert.match(r.result.title, /尚未配置/);
 });
 test('first install and either missing module key never use cached credentials or send requests', async () => {
   const { scriptArgument } = await import('../tools/module-format.mjs');
-  const source = fs.readFileSync(require.resolve('../CDT-Monitor.sgmodule'), 'utf8');
+  const source = fs.readFileSync(require.resolve('../surge/CDT-Monitor.sgmodule'), 'utf8');
   const fresh = await run({ c: null, argument: scriptArgument(source, 'CDT-Panel') });
   assert.match(fresh.result.title, /尚未配置/);
   assert.equal(fresh.requests.length, 0); assert.equal(fresh.store.size, 0);
@@ -239,4 +241,87 @@ test('local source keeps multi-account configuration authoritative', async () =>
 test('Shortcuts cannot override module control permission via argument injection', async () => {
   const r = await run({ argument: await moduleArgument(), intent: { op: 'stop', account: 'ecs-1', confirm: 'i-test', allow_control: 'true' }, trigger: 'intent' });
   assert.equal(r.requests.length, 0); assert.match(r.result.content, /allowControl=true/);
+});
+
+const loonRuntime = fs.readFileSync(require.resolve('../loon/cdt-monitor.js'), 'utf8');
+function loonArgument(extra = {}) {
+  return { ...Object.fromEntries(require('../src/module-parameters.json').map(p => [p.key, p.default])), access_key_id: 'testAK', access_key_secret: 'testSecret', instance_id: 'i-test', ...extra };
+}
+function runLoon(options = {}) {
+  return run({ source: loonRuntime, trigger: undefined, loonName: 'CDT-Refresh', argument: loonArgument(), ...options });
+}
+test('Loon refresh preserves object strings, returns summary, converts timeout and verifies TLS', async () => {
+  const r = await runLoon({ argument: loonArgument({ account_name: '香港|"A"', request_timeout_seconds: '7' }) });
+  assert.match(r.result.content, /香港\|"A"/);
+  assert.ok(r.logs.some(l => l.includes('10.00')));
+  for (const { options } of r.requests) {
+    assert.equal(options.timeout, 7000); assert.equal(options.insecure, false);
+    assert.equal(options['auto-redirect'], false); assert.equal(options['auto-cookie'], false);
+  }
+  assert.equal(r.store.has(C.LOCK_KEY), false);
+  assert.equal(r.notifications.length, 0);
+});
+test('Loon invalid/missing configuration and unknown entry fail before network', async () => {
+  for (const argument of [null, 'op=monitor', loonArgument({ access_key_id: '' }), loonArgument({ allow_control: 'yes' })]) {
+    const r = await runLoon({ argument }); assert.equal(r.requests.length, 0);
+  }
+  const r = await runLoon({ loonName: 'Other' }); assert.equal(r.requests.length, 0);
+});
+test('Loon generic manual stop validates target; refresh ignores injected operation and intent', async () => {
+  const argument = loonArgument({ allow_control: 'true', control_account: 'ecs-1', control_confirm: 'i-test' });
+  const bad = await runLoon({ loonName: 'CDT-Stop', argument: { ...argument, control_confirm: 'i-wrong' } });
+  assert.equal(bad.requests.length, 0);
+  const good = await runLoon({ loonName: 'CDT-Stop', argument });
+  assert.ok(good.requests.some(r => r.params.Action === 'StopInstance'));
+  assert.equal(JSON.parse(good.store.get('cdt.local.module-state.v1')).accounts['ecs-1'].manualPause, true);
+  const refresh = await runLoon({ argument: { ...argument, op: 'stop' }, intent: { op: 'stop', account: 'ecs-1', confirm: 'i-test' } });
+  assert.equal(refresh.requests.some(r => /^(Start|Stop)Instance$/.test(r.params.Action)), false);
+});
+test('Loon cron applies shared threshold policy; failed traffic blocks control and releases lock', async () => {
+  const argument = loonArgument({ allow_control: 'true', threshold_action: 'stop', max_traffic_gib: '100' });
+  const r = await runLoon({ loonName: 'CDT-Monitor', argument, handler: p => p.Action === 'ListCdtInternetTraffic' ? { json: { RequestId: 'mock', TrafficDetails: [{ BusinessRegionId: 'cn-hongkong', Traffic: 96 * C.GiB }] } } : undefined });
+  assert.ok(r.requests.some(r => r.params.Action === 'StopInstance'));
+  assert.ok(r.notifications.length > 0);
+  const failed = await runLoon({ loonName: 'CDT-Monitor', argument, handler: p => p.Action === 'ListCdtInternetTraffic' ? { error: 'testSecret' } : undefined });
+  assert.equal(failed.requests.some(r => /^(Start|Stop)Instance$/.test(r.params.Action)), false);
+  assert.equal(failed.store.has(C.LOCK_KEY), false);
+  assert.equal(JSON.stringify(failed.result).includes('testSecret'), false);
+});
+test('Loon webhook timeout and failed delivery retry retain platform source without duplicate system notice', async () => {
+  const argument = loonArgument({ webhook_enabled: 'true', webhook_url: 'https://example.invalid/hook' });
+  const first = await runLoon({ loonName: 'CDT-Notify-Test', argument, handler: (p, options) => !p.Action ? { error: 'offline' } : undefined });
+  const hook = first.requests.find(r => !r.params.Action);
+  assert.equal(hook.options.timeout, 10000); assert.equal(hook.options.insecure, false);
+  assert.equal(JSON.parse(hook.options.body).source, 'cdt-monitor-loon');
+  assert.equal(JSON.parse(first.store.get('cdt.local.module-state.v1')).outbox.length, 1);
+  const next = await runLoon({ loonName: 'CDT-Monitor', argument, store: first.store });
+  assert.equal(JSON.parse(next.store.get('cdt.local.module-state.v1')).outbox.length, 0);
+  assert.equal(next.notifications.length, 0);
+});
+test('Loon Setup imports JSON and history uses local configuration without exposing secrets', async () => {
+  const c = config();
+  const imported = await runLoon({ c: null, loonName: 'CDT-Setup', source: fs.readFileSync(require.resolve('../loon/cdt-setup.js'), 'utf8'), argument: { config_json: JSON.stringify(c) } });
+  assert.ok(imported.store.has(C.CONFIG_KEY));
+  const argument = loonArgument({ config_source: 'local' });
+  await runLoon({ store: imported.store, argument });
+  const r = await runLoon({ store: imported.store, argument, loonName: 'CDT-History' });
+  assert.equal(r.requests.length, 0);
+  assert.ok(JSON.parse(r.result.result)[0].hourly.length > 0);
+  assert.equal(r.result.result.includes('testSecret'), false);
+});
+test('Loon manual start requires permission, checks threshold and clears manual pause', async () => {
+  const argument = loonArgument({ allow_control: 'true', control_account: 'ecs-1', control_confirm: 'i-test' });
+  const stopped = await runLoon({ loonName: 'CDT-Stop', argument });
+  // Advance only the persisted cooldown, without bypassing the state machine.
+  const state = JSON.parse(stopped.store.get('cdt.local.module-state.v1'));
+  state.accounts['ecs-1'].lastControl.at = Date.now() - 11 * 60000;
+  stopped.store.set('cdt.local.module-state.v1', JSON.stringify(state));
+  const handler = p => p.Action === 'DescribeInstanceStatus' ? { json: { RequestId: 'mock', InstanceStatuses: { InstanceStatus: [{ InstanceId: 'i-test', Status: 'Stopped' }] } } } : undefined;
+  const started = await runLoon({ loonName: 'CDT-Start', argument, store: stopped.store, handler });
+  assert.ok(started.requests.some(r => r.params.Action === 'StartInstance'));
+  assert.equal(JSON.parse(started.store.get('cdt.local.module-state.v1')).accounts['ecs-1'].manualPause, false);
+  const denied = await runLoon({ loonName: 'CDT-Start', argument: { ...argument, allow_control: 'false' }, handler });
+  assert.equal(denied.requests.length, 0);
+  const over = await runLoon({ loonName: 'CDT-Start', argument: { ...argument, max_traffic_gib: '5' }, handler });
+  assert.equal(over.requests.some(r => r.params.Action === 'StartInstance'), false);
 });

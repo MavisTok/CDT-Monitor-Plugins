@@ -7,9 +7,10 @@ export function releaseInfo(pkg) {
     tag: `v${pkg.version}`,
     scriptRoot: `${raw}v${pkg.version}/`,
     install: {
-      ios: `${raw}refs/heads/main/CDT-Monitor.sgmodule`,
-      mac: `${raw}refs/heads/main/CDT-Monitor-Mac.sgmodule`
+      ios: `${raw}refs/heads/main/surge/CDT-Monitor.sgmodule`,
+      mac: `${raw}refs/heads/main/surge/CDT-Monitor-Mac.sgmodule`,
+      loon: `${raw}refs/heads/main/loon/CDT-Monitor.plugin`
     },
-    guide: `https://github.com/${repository}/blob/main/安装说明.md`
+    guide: `https://github.com/${repository}/blob/main/README.md`
   };
 }

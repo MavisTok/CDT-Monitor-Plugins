@@ -1,9 +1,12 @@
 CDT Monitor 持续更新安装地址
 
-iOS
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/main/CDT-Monitor.sgmodule
+Surge iOS
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor.sgmodule
 
-Mac
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge-module/refs/heads/main/CDT-Monitor-Mac.sgmodule
+Surge Mac
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule
 
-安装一次后，在原模块中使用“更新模块”。不要把版本标签地址作为日常安装来源。
+Loon
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/loon/CDT-Monitor.plugin
+
+旧根目录来源需迁移到平台子目录。安装入口跟随 main；配套版本标签发布后远程脚本才可下载。

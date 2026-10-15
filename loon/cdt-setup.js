@@ -256,11 +256,45 @@ var CDT = (function () {
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CDT;
 
+// Only documented host APIs are used; no synthetic Surge trigger globals.
+var CDTPlatform = (function () {
+  'use strict';
+  var loon = typeof $loon !== 'undefined';
+  var names = { 'CDT-Monitor': 'monitor', 'CDT-Refresh': 'refresh', 'CDT-History': 'history', 'CDT-Notify-Test': 'test-notify', 'CDT-Start': 'start', 'CDT-Stop': 'stop' };
+  function operation() {
+    var name = typeof $script !== 'undefined' && $script ? $script.name : '';
+    CDT.assert(Object.prototype.hasOwnProperty.call(names, name), '请从 CDT 插件中选择对应的脚本运行');
+    CDT.assert(typeof $request === 'undefined', '不支持从 HTTP 脚本执行 CDT 操作');
+    return names[name];
+  }
+  return {
+    loon: loon,
+    name: loon ? 'Loon' : 'Surge',
+    operation: operation,
+    request: function (options) {
+      if (loon) { options.timeout *= 1000; options.insecure = false; }
+      return options;
+    },
+    manual: function (op) {
+      if (loon) return operation() === op && (op === 'start' || op === 'stop');
+      return typeof $trigger !== 'undefined' && ['intent', 'editor', 'http-api'].indexOf($trigger) >= 0;
+    },
+    done: function (result) {
+      if (loon && result) console.log((result.title || 'CDT Monitor') + '\n' + (result.content || ''));
+      $done(result || {});
+    }
+  };
+})();
+
 (function () {
   'use strict';
   try {
     // Allow importing local JSON through Shortcuts, without any cloud intermediary.
     var source = LOCAL_CONFIG;
+    if (CDTPlatform.loon) {
+      CDT.assert(typeof $script !== 'undefined' && $script.name === 'CDT-Setup' && typeof $request === 'undefined', '请手动运行 CDT-Setup');
+      if (typeof $argument !== 'undefined' && $argument && $argument.config_json) source = JSON.parse($argument.config_json);
+    }
     if (typeof $intent !== 'undefined' && $intent && $intent.parameter) source = typeof $intent.parameter === 'string' ? JSON.parse($intent.parameter) : $intent.parameter;
     var config = CDT.validate(source);
     var lockRaw = $persistentStore.read(CDT.LOCK_KEY);
@@ -272,9 +306,9 @@ if (typeof module !== 'undefined' && module.exports) module.exports = CDT;
     var enabled = config.accounts.filter(function (a) { return a.enabled; });
     var content = '已保存 ' + enabled.length + ' 条启用记录；' + (config.allowControl ? '允许实例控制，请确认各项策略。' : '只读监控模式。') + '\n请运行 CDT-Refresh 验证阿里云查询。';
     if (config.notifications.system) $notification.post('CDT Monitor', '本地配置已保存', content);
-    $done({ title: 'CDT 配置已保存', content: content, style: 'info' });
+    CDTPlatform.done({ title: 'CDT 配置已保存', content: content, style: 'info' });
   } catch (e) {
     console.log('CDT Setup: 配置未保存，请检查字段格式。');
-    $done({ title: 'CDT 配置未保存', content: e instanceof SyntaxError ? 'JSON 格式无效；原配置未覆盖。' : String(e.message), style: 'error' });
+    CDTPlatform.done({ title: 'CDT 配置未保存', content: e instanceof SyntaxError ? 'JSON 格式无效；原配置未覆盖。' : String(e.message), style: 'error' });
   }
 })();

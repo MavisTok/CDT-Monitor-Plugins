@@ -27,7 +27,7 @@
     if (leaseToken) {
       try { var lock = read(CDT.LOCK_KEY, null); if (lock && lock.token === leaseToken) $persistentStore.write(null, CDT.LOCK_KEY); } catch (_) {}
     }
-    $done(result || {});
+    CDTPlatform.done(result);
   }
   function log(record, message) {
     record.log = record.log || [];
@@ -41,7 +41,7 @@
     options['auto-redirect'] = false;
     options['auto-cookie'] = false;
     return new Promise(function (resolve, reject) {
-      $httpClient.post(options, function (error, response, data) {
+      $httpClient.post(CDTPlatform.request(options), function (error, response, data) {
         if (ended) { reject(new Error('本轮运行已结束')); return; }
         // Never log raw HTTP errors, URLs or bodies: these may contain signed credentials.
         if (error) { reject(new Error('网络请求失败或超时')); return; }
@@ -143,7 +143,7 @@
     var headers = { 'Content-Type': 'application/json' };
     Object.keys(settings.headers).forEach(function (key) { headers[key] = settings.headers[key]; });
     return new Promise(function (resolve, reject) {
-      $httpClient.post({ url: settings.url, headers: headers, body: JSON.stringify({ source: 'cdt-monitor-surge', id: event.key, title: event.title, body: event.body, at: event.at }), timeout: config.requestTimeoutSeconds, 'auto-redirect': false, 'auto-cookie': false }, function (error, response) {
+      $httpClient.post(CDTPlatform.request({ url: settings.url, headers: headers, body: JSON.stringify({ source: 'cdt-monitor-' + CDTPlatform.name.toLowerCase(), id: event.key, title: event.title, body: event.body, at: event.at }), timeout: config.requestTimeoutSeconds, 'auto-redirect': false, 'auto-cookie': false }), function (error, response) {
         if (error || !response || response.status < 200 || response.status >= 300 || ended) reject(new Error('Webhook 发送失败'));
         else resolve();
       });
@@ -313,13 +313,25 @@
   }
   async function main() {
     var argument = typeof $argument === 'undefined' ? '' : $argument;
+    var loonArgs;
+    if (CDTPlatform.loon) {
+      CDT.assert(argument && typeof argument === 'object' && !Array.isArray(argument), '请使用 Loon 插件参数运行');
+      loonArgs = argument;
+      argument = {};
+      Object.keys(MODULE_PARAMETER_DEFAULTS).forEach(function (key) { if (Object.prototype.hasOwnProperty.call(loonArgs, key)) argument[key] = loonArgs[key]; });
+      argument.op = CDTPlatform.operation();
+    }
     moduleSettings = CDT.parseModuleArguments(argument);
     if (moduleSettings && moduleSettings.unconfigured) {
       finish({ title: 'CDT Monitor · 尚未配置', content: '请在模块参数中将 access_key_id 和 access_key_secret 的“未设置”替换为自己的 RAM 密钥，保存后刷新面板。未使用的可选项保留“未设置”。', style: 'info' });
       return;
     }
     args = moduleSettings ? { op: moduleSettings.op } : parseArgs(argument);
-    if (typeof $intent !== 'undefined' && $intent && $intent.parameter) {
+    if (CDTPlatform.loon && (args.op === 'start' || args.op === 'stop')) {
+      args.account = loonArgs.control_account;
+      args.confirm = loonArgs.control_confirm;
+    }
+    if (!CDTPlatform.loon && typeof $intent !== 'undefined' && $intent && $intent.parameter) {
       var input = $intent.parameter;
       var intent;
       try { intent = typeof input === 'string' ? (input.trim().charAt(0) === '{' ? JSON.parse(input) : parseArgs(input)) : input; }
@@ -352,7 +364,7 @@
     if (op === 'start' || op === 'stop') {
       CDT.assert(config.allowControl && args.account && accounts.length === 1, '手动控制需要 allowControl=true，并明确指定 account=id');
       CDT.assert(args.confirm === accounts[0].instanceId && accounts[0].instanceId, '手动控制需要 confirm=完整实例ID');
-      CDT.assert(typeof $trigger !== 'undefined' && ['intent', 'editor', 'http-api'].indexOf($trigger) >= 0, '控制仅允许显式快捷指令、编辑器或本地 API 调用');
+      CDT.assert(CDTPlatform.manual(op), '控制仅允许显式手动脚本、快捷指令、编辑器或本地 API 调用');
     }
     var oldLock = read(CDT.LOCK_KEY, null);
     if (oldLock && oldLock.expires > Date.now()) { finish({ title: 'CDT Monitor · 正在运行', content: '另一轮查询/控制尚未结束，请稍后刷新。', style: 'info' }); return; }
@@ -375,7 +387,7 @@
     await refresh(accounts);
     if (op === 'monitor') await automate(accounts);
     if (op === 'start' || op === 'stop') await control(accounts[0], { action: op, reason: 'manual', key: 'manual:' + started }, true);
-    if (op === 'test-notify') notify('test:' + started, '通知测试', 'CDT Monitor Surge 本地通知测试。');
+    if (op === 'test-notify') notify('test:' + started, '通知测试', 'CDT Monitor ' + CDTPlatform.name + ' 本地通知测试。');
     await billing(accounts);
     if (op !== 'panel' && op !== 'refresh') await flushNotifications();
     guard(); state.lastRun = new Date().toISOString(); save();

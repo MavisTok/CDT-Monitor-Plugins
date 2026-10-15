@@ -224,21 +224,59 @@ var CDT = (function () {
 })();
 if (typeof module !== 'undefined' && module.exports) module.exports = CDT;
 
+// Only documented host APIs are used; no synthetic Surge trigger globals.
+var CDTPlatform = (function () {
+  'use strict';
+  var loon = typeof $loon !== 'undefined';
+  var names = { 'CDT-Monitor': 'monitor', 'CDT-Refresh': 'refresh', 'CDT-History': 'history', 'CDT-Notify-Test': 'test-notify', 'CDT-Start': 'start', 'CDT-Stop': 'stop' };
+  function operation() {
+    var name = typeof $script !== 'undefined' && $script ? $script.name : '';
+    CDT.assert(Object.prototype.hasOwnProperty.call(names, name), '请从 CDT 插件中选择对应的脚本运行');
+    CDT.assert(typeof $request === 'undefined', '不支持从 HTTP 脚本执行 CDT 操作');
+    return names[name];
+  }
+  return {
+    loon: loon,
+    name: loon ? 'Loon' : 'Surge',
+    operation: operation,
+    request: function (options) {
+      if (loon) { options.timeout *= 1000; options.insecure = false; }
+      return options;
+    },
+    manual: function (op) {
+      if (loon) return operation() === op && (op === 'start' || op === 'stop');
+      return typeof $trigger !== 'undefined' && ['intent', 'editor', 'http-api'].indexOf($trigger) >= 0;
+    },
+    done: function (result) {
+      if (loon && result) console.log((result.title || 'CDT Monitor') + '\n' + (result.content || ''));
+      $done(result || {});
+    }
+  };
+})();
+
 var MODULE_PARAMETER_DEFAULTS = {"config_source":"module","account_id":"ecs-1","account_name":"ECS","access_key_id":"未设置","access_key_secret":"未设置","region_id":"cn-hongkong","instance_id":"未设置","site_type":"china","max_traffic_gib":"200","threshold_percent":"95","allow_control":"false","threshold_action":"notify","shutdown_mode":"KeepCharging","keep_alive":"false","schedule_enabled":"false","start_time":"08:00","stop_time":"23:00","billing":"false","daily_report_time":"21:00","timezone_offset_minutes":"480","request_timeout_seconds":"10","system_notification":"true","telegram_enabled":"false","telegram_base_url":"https://api.telegram.org","telegram_bot_token":"未设置","telegram_chat_id":"未设置","webhook_enabled":"false","webhook_url":"未设置","webhook_authorization":"未设置"};
 /* Parameter transport uses | separators, not query-string decoding: URLs with &,
  * tokens with +/= and literal percent signs remain intact after Surge substitution.
  * MODULE_PARAMETER_DEFAULTS is generated from module-parameters.json at build time. */
 CDT.parseModuleArguments = function (argument) {
   'use strict';
-  if (typeof argument !== 'string' || argument.indexOf('cdt-module-v1|') !== 0) return null;
   var values = Object.create(null);
-  argument.slice('cdt-module-v1|'.length).split('|').forEach(function (part) {
+  if (argument && typeof argument === 'object' && !Array.isArray(argument)) {
+    Object.keys(argument).forEach(function (key) {
+      CDT.assert(key === 'op' || Object.prototype.hasOwnProperty.call(MODULE_PARAMETER_DEFAULTS, key), '未知插件配置字段');
+      CDT.assert(argument[key] === null || ['string', 'number', 'boolean'].indexOf(typeof argument[key]) >= 0, '插件参数类型无效');
+      values[key] = argument[key] === null ? '' : String(argument[key]);
+    });
+  } else {
+    if (typeof argument !== 'string' || argument.indexOf('cdt-module-v1|') !== 0) return null;
+    argument.slice('cdt-module-v1|'.length).split('|').forEach(function (part) {
     var at = part.indexOf('='), key = part.slice(0, at), value = part.slice(at + 1);
     CDT.assert(at > 0 && (key === 'op' || Object.prototype.hasOwnProperty.call(MODULE_PARAMETER_DEFAULTS, key)), '模块参数格式无效：请勿在值中使用竖线');
     CDT.assert(!Object.prototype.hasOwnProperty.call(values, key), '模块参数重复：' + key);
     CDT.assert(!/["\r\n]/.test(value) && value.indexOf('{{{') < 0, '模块参数未正确替换或包含引号/换行：' + key);
     values[key] = value;
-  });
+    });
+  }
   Object.keys(MODULE_PARAMETER_DEFAULTS).forEach(function (key) {
     if (values[key] === undefined) values[key] = MODULE_PARAMETER_DEFAULTS[key];
     // Surge must substitute a nonempty value even for disabled optional features.
@@ -311,7 +349,7 @@ CDT.parseModuleArguments = function (argument) {
     if (leaseToken) {
       try { var lock = read(CDT.LOCK_KEY, null); if (lock && lock.token === leaseToken) $persistentStore.write(null, CDT.LOCK_KEY); } catch (_) {}
     }
-    $done(result || {});
+    CDTPlatform.done(result);
   }
   function log(record, message) {
     record.log = record.log || [];
@@ -325,7 +363,7 @@ CDT.parseModuleArguments = function (argument) {
     options['auto-redirect'] = false;
     options['auto-cookie'] = false;
     return new Promise(function (resolve, reject) {
-      $httpClient.post(options, function (error, response, data) {
+      $httpClient.post(CDTPlatform.request(options), function (error, response, data) {
         if (ended) { reject(new Error('本轮运行已结束')); return; }
         // Never log raw HTTP errors, URLs or bodies: these may contain signed credentials.
         if (error) { reject(new Error('网络请求失败或超时')); return; }
@@ -427,7 +465,7 @@ CDT.parseModuleArguments = function (argument) {
     var headers = { 'Content-Type': 'application/json' };
     Object.keys(settings.headers).forEach(function (key) { headers[key] = settings.headers[key]; });
     return new Promise(function (resolve, reject) {
-      $httpClient.post({ url: settings.url, headers: headers, body: JSON.stringify({ source: 'cdt-monitor-surge', id: event.key, title: event.title, body: event.body, at: event.at }), timeout: config.requestTimeoutSeconds, 'auto-redirect': false, 'auto-cookie': false }, function (error, response) {
+      $httpClient.post(CDTPlatform.request({ url: settings.url, headers: headers, body: JSON.stringify({ source: 'cdt-monitor-' + CDTPlatform.name.toLowerCase(), id: event.key, title: event.title, body: event.body, at: event.at }), timeout: config.requestTimeoutSeconds, 'auto-redirect': false, 'auto-cookie': false }), function (error, response) {
         if (error || !response || response.status < 200 || response.status >= 300 || ended) reject(new Error('Webhook 发送失败'));
         else resolve();
       });
@@ -597,13 +635,25 @@ CDT.parseModuleArguments = function (argument) {
   }
   async function main() {
     var argument = typeof $argument === 'undefined' ? '' : $argument;
+    var loonArgs;
+    if (CDTPlatform.loon) {
+      CDT.assert(argument && typeof argument === 'object' && !Array.isArray(argument), '请使用 Loon 插件参数运行');
+      loonArgs = argument;
+      argument = {};
+      Object.keys(MODULE_PARAMETER_DEFAULTS).forEach(function (key) { if (Object.prototype.hasOwnProperty.call(loonArgs, key)) argument[key] = loonArgs[key]; });
+      argument.op = CDTPlatform.operation();
+    }
     moduleSettings = CDT.parseModuleArguments(argument);
     if (moduleSettings && moduleSettings.unconfigured) {
       finish({ title: 'CDT Monitor · 尚未配置', content: '请在模块参数中将 access_key_id 和 access_key_secret 的“未设置”替换为自己的 RAM 密钥，保存后刷新面板。未使用的可选项保留“未设置”。', style: 'info' });
       return;
     }
     args = moduleSettings ? { op: moduleSettings.op } : parseArgs(argument);
-    if (typeof $intent !== 'undefined' && $intent && $intent.parameter) {
+    if (CDTPlatform.loon && (args.op === 'start' || args.op === 'stop')) {
+      args.account = loonArgs.control_account;
+      args.confirm = loonArgs.control_confirm;
+    }
+    if (!CDTPlatform.loon && typeof $intent !== 'undefined' && $intent && $intent.parameter) {
       var input = $intent.parameter;
       var intent;
       try { intent = typeof input === 'string' ? (input.trim().charAt(0) === '{' ? JSON.parse(input) : parseArgs(input)) : input; }
@@ -636,7 +686,7 @@ CDT.parseModuleArguments = function (argument) {
     if (op === 'start' || op === 'stop') {
       CDT.assert(config.allowControl && args.account && accounts.length === 1, '手动控制需要 allowControl=true，并明确指定 account=id');
       CDT.assert(args.confirm === accounts[0].instanceId && accounts[0].instanceId, '手动控制需要 confirm=完整实例ID');
-      CDT.assert(typeof $trigger !== 'undefined' && ['intent', 'editor', 'http-api'].indexOf($trigger) >= 0, '控制仅允许显式快捷指令、编辑器或本地 API 调用');
+      CDT.assert(CDTPlatform.manual(op), '控制仅允许显式手动脚本、快捷指令、编辑器或本地 API 调用');
     }
     var oldLock = read(CDT.LOCK_KEY, null);
     if (oldLock && oldLock.expires > Date.now()) { finish({ title: 'CDT Monitor · 正在运行', content: '另一轮查询/控制尚未结束，请稍后刷新。', style: 'info' }); return; }
@@ -659,7 +709,7 @@ CDT.parseModuleArguments = function (argument) {
     await refresh(accounts);
     if (op === 'monitor') await automate(accounts);
     if (op === 'start' || op === 'stop') await control(accounts[0], { action: op, reason: 'manual', key: 'manual:' + started }, true);
-    if (op === 'test-notify') notify('test:' + started, '通知测试', 'CDT Monitor Surge 本地通知测试。');
+    if (op === 'test-notify') notify('test:' + started, '通知测试', 'CDT Monitor ' + CDTPlatform.name + ' 本地通知测试。');
     await billing(accounts);
     if (op !== 'panel' && op !== 'refresh') await flushNotifications();
     guard(); state.lastRun = new Date().toISOString(); save();

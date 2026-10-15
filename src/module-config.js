@@ -3,15 +3,23 @@
  * MODULE_PARAMETER_DEFAULTS is generated from module-parameters.json at build time. */
 CDT.parseModuleArguments = function (argument) {
   'use strict';
-  if (typeof argument !== 'string' || argument.indexOf('cdt-module-v1|') !== 0) return null;
   var values = Object.create(null);
-  argument.slice('cdt-module-v1|'.length).split('|').forEach(function (part) {
+  if (argument && typeof argument === 'object' && !Array.isArray(argument)) {
+    Object.keys(argument).forEach(function (key) {
+      CDT.assert(key === 'op' || Object.prototype.hasOwnProperty.call(MODULE_PARAMETER_DEFAULTS, key), '未知插件配置字段');
+      CDT.assert(argument[key] === null || ['string', 'number', 'boolean'].indexOf(typeof argument[key]) >= 0, '插件参数类型无效');
+      values[key] = argument[key] === null ? '' : String(argument[key]);
+    });
+  } else {
+    if (typeof argument !== 'string' || argument.indexOf('cdt-module-v1|') !== 0) return null;
+    argument.slice('cdt-module-v1|'.length).split('|').forEach(function (part) {
     var at = part.indexOf('='), key = part.slice(0, at), value = part.slice(at + 1);
     CDT.assert(at > 0 && (key === 'op' || Object.prototype.hasOwnProperty.call(MODULE_PARAMETER_DEFAULTS, key)), '模块参数格式无效：请勿在值中使用竖线');
     CDT.assert(!Object.prototype.hasOwnProperty.call(values, key), '模块参数重复：' + key);
     CDT.assert(!/["\r\n]/.test(value) && value.indexOf('{{{') < 0, '模块参数未正确替换或包含引号/换行：' + key);
     values[key] = value;
-  });
+    });
+  }
   Object.keys(MODULE_PARAMETER_DEFAULTS).forEach(function (key) {
     if (values[key] === undefined) values[key] = MODULE_PARAMETER_DEFAULTS[key];
     // Surge must substitute a nonempty value even for disabled optional features.
