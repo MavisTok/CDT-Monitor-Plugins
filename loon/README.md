@@ -9,10 +9,10 @@
 在 Loon 的插件管理中添加：
 
 ```text
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/loon/CDT-Monitor.plugin
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/loon/CDT-Monitor.plugin
 ```
 
-v0.4.1 已改用新仓库名，内部脚本固定到 `v0.4.1/loon/`。原用户保留参数后将插件来源更新为上述地址。测试未发布代码时，将本目录两个 JS 放到 Loon 可访问的本地脚本目录，复制插件并将两个远程脚本 URL 替换为对应本地路径，再导入本地插件。
+v0.5.0 仓库名统一为 CDT-Monitor-Plugins，内部脚本固定到 `v0.5.0/loon/`。原用户保留参数后将插件来源更新为上述地址。测试未发布代码时，将本目录两个 JS 放到 Loon 可访问的本地脚本目录，复制插件并将两个远程脚本 URL 替换为对应本地路径，再导入本地插件。
 
 1. 打开插件参数，保留 `config_source=module`。
 2. 填写 `access_key_id`、`access_key_secret`、`region_id`、`max_traffic_gib`；需要实例查询时填写 `instance_id`。
@@ -34,6 +34,8 @@ v0.4.1 已改用新仓库名，内部脚本固定到 `v0.4.1/loon/`。原用户�
 CDT 是阿里云账号的国内/海外分类汇总，非实例独立用量。额度按实际 GiB 填写。配置、备份、历史在 Loon 本地保存，不会从 Surge 自动迁移。参数模式与高级 JSON 模式使用各自独立的配置和历史；切换来源不合并历史。
 
 ## 手动脚本
+
+插件详情的描述中提供中文操作速查，参数表包含中文标题和用途说明。脚本保留英文 Tag 以匹配运行入口；配置源码中每项脚本上方也附有中文注释。普通用户只需填写两项密钥并保存，再运行 **CDT-Refresh**；**CDT-Setup 仅用于导入高级 JSON**。
 
 在 Loon 中选择插件注册的 Generic 脚本运行，保持原来的 Tag：
 

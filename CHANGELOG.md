@@ -1,5 +1,13 @@
 # 更新记录
 
+## v0.5.0 — 2026-10-16
+
+- 新增 Egern 原生 ctx 脚本、YAML 模块、环境变量表单与只读 Widget。
+- 新增 Stash 覆写参数、只读 Tile、定时任务及编辑器手动操作支持。
+- 仓库统一更名为 CDT-Monitor-Plugins，更新四平台安装地址及版本脚本引用。
+- Loon 新增中文参数、操作速查与脚本注释；空白 Setup 返回普通模式引导。
+- 共享控制核心继续校验实时流量、实例状态、账号和实例确认；新增平台拒绝面板或定时入口的手动启停。
+
 ## v0.4.1 — 2026-10-16
 
 - 仓库更名为 `MavisTok/CDT-Monitor-Surge-Loon`，项目标题为 CDT Monitor for Surge & Loon。

@@ -9,7 +9,9 @@ export function releaseInfo(pkg) {
     install: {
       ios: `${raw}refs/heads/main/surge/CDT-Monitor.sgmodule`,
       mac: `${raw}refs/heads/main/surge/CDT-Monitor-Mac.sgmodule`,
-      loon: `${raw}refs/heads/main/loon/CDT-Monitor.plugin`
+      loon: `${raw}refs/heads/main/loon/CDT-Monitor.plugin`,
+      egern: `${raw}refs/heads/main/egern/CDT-Monitor.yaml`,
+      stash: `${raw}refs/heads/main/stash/CDT-Monitor.stoverride`
     },
     guide: `https://github.com/${repository}/blob/main/README.md`
   };

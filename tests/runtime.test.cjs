@@ -10,7 +10,7 @@ function config(extra = {}) {
   return C.validate({ allowControl: false, ...extra, accounts: extra.accounts || [{ id: 'hk', name: '香港', accessKeyId: 'testAK', accessKeySecret: 'testSecret', regionId: 'cn-hongkong', instanceId: 'i-test', maxTrafficGiB: 100 }] });
 }
 function storage(c) { return new Map(c ? [[C.CONFIG_KEY, JSON.stringify(c)]] : []); }
-async function run({ c = config(), store = storage(c), op = 'panel', argument, handler, intent, trigger = 'editor', source = runtime, writeFail = false, input, loonName } = {}) {
+async function run({ c = config(), store = storage(c), op = 'panel', argument, handler, intent, trigger = 'editor', source = runtime, writeFail = false, input, loonName, stashName, stashType = 'generic' } = {}) {
   const requests = [], notifications = [], logs = [], timers = new Set();
   let calls = 0;
   const result = await new Promise((resolve, reject) => {
@@ -19,8 +19,9 @@ async function run({ c = config(), store = storage(c), op = 'panel', argument, h
       $argument: argument === undefined ? 'op=' + op : argument, $trigger: trigger, $input: input,
       $intent: intent ? { parameter: intent } : undefined,
       $loon: loonName ? 'Test Loon' : undefined,
-      $script: loonName ? { name: loonName } : undefined,
-      $persistentStore: { read: key => store.get(key) ?? null, write: (value, key) => { if (writeFail) return false; if (value === null) store.delete(key); else store.set(key, value); return true; } },
+      $script: loonName ? { name: loonName } : stashName ? { name: stashName, type: stashType } : undefined,
+      $environment: stashName ? { 'stash-version': '3.7' } : undefined,
+      $persistentStore: { read: key => store.get(key) ?? null, write: (value, key) => { if (stashName) assert.equal(typeof value, 'string'); if (writeFail) return false; if (value === null) store.delete(key); else store.set(key, value); return true; } },
       $notification: { post: (...v) => notifications.push(v) },
       $httpClient: { post: (options, callback) => {
         const params = Object.fromEntries(new URLSearchParams(options.body)); requests.push({ options, params });
@@ -324,4 +325,52 @@ test('Loon manual start requires permission, checks threshold and clears manual 
   assert.equal(denied.requests.length, 0);
   const over = await runLoon({ loonName: 'CDT-Start', argument: { ...argument, max_traffic_gib: '5' }, handler });
   assert.equal(over.requests.some(r => r.params.Action === 'StartInstance'), false);
+});
+
+const stashRuntime = fs.readFileSync(require.resolve('../stash/cdt-monitor.js'), 'utf8');
+function runStash(options = {}) {
+  return run({ source: stashRuntime, stashName: 'CDT-Refresh', argument: JSON.stringify(loonArgument()), ...options });
+}
+test('Stash Tile forces read-only, uses seconds and string-only lease release', async () => {
+  const r = await runStash({ stashName: 'CDT-Stop', stashType: 'tile', argument: JSON.stringify(loonArgument({ allow_control: 'true', control_account: 'ecs-1', control_confirm: 'i-test' })) });
+  assert.match(r.result.content, /10.00/);
+  assert.equal(r.requests.some(r => /^(Start|Stop)Instance$/.test(r.params.Action)), false);
+  assert.equal(r.store.get(C.LOCK_KEY), 'null');
+  assert.equal(r.requests[0].options.timeout, 10);
+  assert.equal(r.requests[0].options.insecure, false);
+});
+test('Stash rejects scheduled manual controls but editor stop works', async () => {
+  const argument = JSON.stringify(loonArgument({ allow_control: 'true', control_account: 'ecs-1', control_confirm: 'i-test' }));
+  for (const stashType of ['cron', 'schedule', 'network', 'request', 'response']) {
+    const r = await runStash({ stashName: 'CDT-Stop', stashType, argument });
+    assert.equal(r.requests.length, 0);
+  }
+  const manual = await runStash({ stashName: 'CDT-Stop', stashType: 'generic', argument });
+  assert.ok(manual.requests.some(r => r.params.Action === 'StopInstance'));
+  const denied = await runStash({ stashName: 'CDT-Stop', argument: JSON.stringify(loonArgument({ allow_control: 'true', control_account: 'ecs-1', control_confirm: 'wrong' })) });
+  assert.equal(denied.requests.length, 0);
+});
+test('Stash cron shares automatic threshold policy and invalid parameters fail closed', async () => {
+  const r = await runStash({ stashName: 'CDT-Monitor', stashType: 'cron', argument: JSON.stringify(loonArgument({ allow_control: 'true', threshold_action: 'stop', max_traffic_gib: '5' })) });
+  assert.ok(r.requests.some(r => r.params.Action === 'StopInstance'));
+  const bad = await runStash({ argument: '{bad-json' }); assert.equal(bad.requests.length, 0);
+});
+test('Loon and Stash blank Setup gives instructions without writing configuration', async () => {
+  const loon = await runLoon({ c: null, loonName: 'CDT-Setup', source: setup, argument: {} });
+  const stash = await runStash({ c: null, stashName: 'CDT-Setup', source: fs.readFileSync(require.resolve('../stash/cdt-setup.js'), 'utf8'), argument: '{}' });
+  for (const r of [loon, stash]) {
+    assert.match(r.result.title, /仅高级JSON导入/); assert.match(r.result.content, /CDT-Refresh/); assert.equal(r.store.size, 0);
+  }
+});
+test('Stash Setup imports explicit editor JSON and rejects Tile; local history uses that configuration', async () => {
+  const source = fs.readFileSync(require.resolve('../stash/cdt-setup.js'), 'utf8');
+  const argument = JSON.stringify({ config_json: JSON.stringify(config()) });
+  const blocked = await runStash({ c: null, stashName: 'CDT-Setup', stashType: 'tile', source, argument });
+  assert.equal(blocked.store.size, 0);
+  const imported = await runStash({ c: null, stashName: 'CDT-Setup', source, argument });
+  assert.ok(imported.store.has(C.CONFIG_KEY));
+  await runStash({ store: imported.store, argument: '{"config_source":"local"}' });
+  const history = await runStash({ store: imported.store, stashName: 'CDT-History', argument: '{"config_source":"local"}' });
+  assert.equal(history.requests.length, 0);
+  assert.ok(JSON.parse(history.result.result)[0].hourly.length);
 });

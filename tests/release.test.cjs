@@ -12,7 +12,7 @@ test('version upgrades keep module installation URLs stable while advancing runt
   assert.notEqual(next.scriptRoot, current.scriptRoot);
   const list = fs.readFileSync(require.resolve('../INSTALL-URLS.txt'), 'utf8');
   for (const url of Object.values(current.install)) {
-    assert.match(url, /\/refs\/heads\/main\/(surge|loon)\/CDT-Monitor(?:-Mac)?\.(sgmodule|plugin)$/);
+    assert.match(url, /\/refs\/heads\/main\/(surge|loon|egern|stash)\/CDT-Monitor(?:-Mac)?\.(sgmodule|plugin|yaml|stoverride)$/);
     assert.ok(list.includes(url));
   }
 });
@@ -30,7 +30,7 @@ test('release notes and documented installation URLs never recommend pinned modu
 test('moved platform documentation and Surge URL schemes point to the new locations', async () => {
   const path = require('node:path');
   const root = path.resolve(__dirname, '..');
-  for (const file of ['README.md', 'surge/README.md', 'surge/安装说明.md', 'loon/README.md']) {
+  for (const file of ['README.md', 'surge/README.md', 'surge/安装说明.md', 'loon/README.md', 'egern/README.md', 'stash/README.md']) {
     const text = fs.readFileSync(path.join(root, file), 'utf8');
     for (const [, link] of text.matchAll(/\]\(([^)]+)\)/g)) {
       if (/^[a-z]+:|^#/i.test(link)) continue;

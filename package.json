@@ -1,9 +1,9 @@
 {
-  "name": "cdt-monitor-surge-loon",
+  "name": "cdt-monitor-plugins",
   "private": true,
-  "version": "0.4.1",
+  "version": "0.5.0",
   "description": "阿里云 CDT 流量监控、通知与 ECS 实例控制插件",
-  "repository": { "type": "git", "url": "https://github.com/MavisTok/CDT-Monitor-Surge-Loon.git" },
+  "repository": { "type": "git", "url": "https://github.com/MavisTok/CDT-Monitor-Plugins.git" },
   "scripts": { "build": "node tools/build.mjs", "test": "node --test tests/*.test.cjs", "release:notes": "node tools/release-notes.mjs" },
   "license": "MIT"
 }

@@ -11,6 +11,8 @@ process.stdout.write(`日常安装统一使用下方持续更新地址。以后�
 - iOS：${info.install.ios}
 - Mac：${info.install.mac}
 - Loon：${info.install.loon}
+- Egern：${info.install.egern}
+- Stash：${info.install.stash}
 - [安装和迁移说明](${info.guide})
 
 已经通过 /v0.3.x/ 等固定版本地址或旧根目录地址安装的模块，需要一次性迁移到上面的平台目录来源。先保留参数；若客户端提供修改来源 URL 的入口，可在原模块中修改，否则只需重新安装一次。以后保持这一来源不变。只启用一份 CDT 模块。

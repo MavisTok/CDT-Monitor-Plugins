@@ -3,11 +3,17 @@
   try {
     // Allow importing local JSON through Shortcuts, without any cloud intermediary.
     var source = LOCAL_CONFIG;
-    if (CDTPlatform.loon) {
-      CDT.assert(typeof $script !== 'undefined' && $script.name === 'CDT-Setup' && typeof $request === 'undefined', '请手动运行 CDT-Setup');
-      if (typeof $argument !== 'undefined' && $argument && $argument.config_json) source = JSON.parse($argument.config_json);
+    if (CDTPlatform.named) {
+      CDT.assert(CDTPlatform.setupAllowed(), '请手动运行 CDT-Setup；不能从面板或定时任务导入');
+      var input = typeof $argument === 'undefined' ? null : $argument;
+      if (typeof input === 'string') input = JSON.parse(input);
+      if (!input || !input.config_json) {
+        CDTPlatform.done({ title: 'CDT Setup · 仅高级JSON导入', content: '普通用户无需运行Setup：在参数表填写AccessKey ID和Secret两项，保存后运行CDT-Refresh或刷新面板。多账号用户请先填写config_json再手动运行Setup。', style: 'info' });
+        return;
+      }
+      source = JSON.parse(input.config_json);
     }
-    if (typeof $intent !== 'undefined' && $intent && $intent.parameter) source = typeof $intent.parameter === 'string' ? JSON.parse($intent.parameter) : $intent.parameter;
+    if (!CDTPlatform.named && typeof $intent !== 'undefined' && $intent && $intent.parameter) source = typeof $intent.parameter === 'string' ? JSON.parse($intent.parameter) : $intent.parameter;
     var config = CDT.validate(source);
     var lockRaw = $persistentStore.read(CDT.LOCK_KEY);
     var lock = lockRaw ? JSON.parse(lockRaw) : null;

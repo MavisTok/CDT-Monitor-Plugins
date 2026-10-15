@@ -1,0 +1,248 @@
+{
+  "name": "CDT Monitor",
+  "desc": "v0.5.0 · 阿里云CDT监控。填好AccessKey ID与Secret并保存后查询；普通用户不运行Setup。刷新与面板只查询；Monitor每10分钟执行已启用的自动策略。History查看日志；Notify-Test测试通知；Start/Stop手动启停；Setup只导入完整高级JSON。 参数表要求iOS/tvOS 3.7+或macOS 4.4+（Beta）。手动启停只能在编辑器执行，切勿添加到Tile或定时任务。",
+  "arguments-version": 1,
+  "arguments": {
+    "config_source": {
+      "type": "input",
+      "title": "配置来源",
+      "description": "普通单账号保持module：填好两项密钥并保存后运行CDT-Refresh；local用于已导入的高级多账号JSON",
+      "default": "module"
+    },
+    "account_id": {
+      "type": "input",
+      "title": "账号记录ID",
+      "description": "稳定且唯一的记录 ID",
+      "default": "ecs-1"
+    },
+    "account_name": {
+      "type": "input",
+      "title": "显示名称",
+      "description": "面板显示名称",
+      "default": "ECS"
+    },
+    "access_key_id": {
+      "type": "input",
+      "title": "必填·AccessKey ID",
+      "description": "必填：与AccessKey Secret配对。只填ID不能查询；保存后运行CDT-Refresh，不要运行CDT-Setup",
+      "default": "未设置"
+    },
+    "access_key_secret": {
+      "type": "input",
+      "title": "必填·AccessKey Secret",
+      "description": "必填：填写该AccessKey ID对应的Secret；参数表模式无需导入JSON",
+      "default": "未设置"
+    },
+    "region_id": {
+      "type": "input",
+      "title": "实例地域",
+      "description": "实例地域",
+      "default": "cn-hongkong"
+    },
+    "instance_id": {
+      "type": "input",
+      "title": "实例ID（仅查流量可不填）",
+      "description": "完整 ECS 实例 ID；未设置则仅查流量",
+      "default": "未设置"
+    },
+    "site_type": {
+      "type": "input",
+      "title": "阿里云站点",
+      "description": "china 中国站 / international 国际站",
+      "default": "china"
+    },
+    "max_traffic_gib": {
+      "type": "input",
+      "title": "流量额度GiB",
+      "description": "账号分类额度，单位 GiB，请按实际额度修改",
+      "default": "200"
+    },
+    "threshold_percent": {
+      "type": "input",
+      "title": "告警阈值百分比",
+      "description": "告警阈值百分比",
+      "default": "95"
+    },
+    "allow_control": {
+      "type": "input",
+      "title": "实例控制总开关",
+      "description": "实例控制总开关 true / false",
+      "default": "false"
+    },
+    "threshold_action": {
+      "type": "input",
+      "title": "达到阈值后的操作",
+      "description": "notify 仅通知 / stop 停机并通知",
+      "default": "notify"
+    },
+    "shutdown_mode": {
+      "type": "input",
+      "title": "停机模式",
+      "description": "KeepCharging 普通停机 / StopCharging 节省停机",
+      "default": "KeepCharging"
+    },
+    "keep_alive": {
+      "type": "input",
+      "title": "实例保活",
+      "description": "实例保活 true / false",
+      "default": "false"
+    },
+    "schedule_enabled": {
+      "type": "input",
+      "title": "定时启停开关",
+      "description": "定时启停 true / false",
+      "default": "false"
+    },
+    "start_time": {
+      "type": "input",
+      "title": "每天启动时间",
+      "description": "定时启动 HH:mm",
+      "default": "08:00"
+    },
+    "stop_time": {
+      "type": "input",
+      "title": "每天停止时间",
+      "description": "定时停止 HH:mm",
+      "default": "23:00"
+    },
+    "billing": {
+      "type": "input",
+      "title": "查询余额与账单",
+      "description": "余额与账单查询 true / false",
+      "default": "false"
+    },
+    "daily_report_time": {
+      "type": "input",
+      "title": "日报时间",
+      "description": "日报 HH:mm；填写关闭可停用日报",
+      "default": "21:00"
+    },
+    "timezone_offset_minutes": {
+      "type": "input",
+      "title": "时区偏移分钟",
+      "description": "业务时区相对 UTC 的分钟偏移",
+      "default": "480"
+    },
+    "request_timeout_seconds": {
+      "type": "input",
+      "title": "请求超时秒数",
+      "description": "请求超时 3–15 秒",
+      "default": "10"
+    },
+    "system_notification": {
+      "type": "input",
+      "title": "系统通知开关",
+      "description": "系统通知 true / false",
+      "default": "true"
+    },
+    "telegram_enabled": {
+      "type": "input",
+      "title": "Telegram通知开关",
+      "description": "Telegram 通知 true / false",
+      "default": "false"
+    },
+    "telegram_base_url": {
+      "type": "input",
+      "title": "Telegram接口地址",
+      "description": "Telegram HTTPS API 或反代地址",
+      "default": "https://api.telegram.org"
+    },
+    "telegram_bot_token": {
+      "type": "input",
+      "title": "Telegram机器人Token",
+      "description": "Telegram Bot Token",
+      "default": "未设置"
+    },
+    "telegram_chat_id": {
+      "type": "input",
+      "title": "Telegram接收者ID",
+      "description": "Telegram 接收者 Chat ID",
+      "default": "未设置"
+    },
+    "webhook_enabled": {
+      "type": "input",
+      "title": "Webhook通知开关",
+      "description": "Webhook 通知 true / false",
+      "default": "false"
+    },
+    "webhook_url": {
+      "type": "input",
+      "title": "Webhook地址",
+      "description": "Webhook HTTPS 地址",
+      "default": "未设置"
+    },
+    "webhook_authorization": {
+      "type": "input",
+      "title": "Webhook认证",
+      "description": "Webhook Authorization 请求头；无需认证时保留未设置",
+      "default": "未设置"
+    },
+    "control_account": {
+      "type": "input",
+      "title": "手动控制账号ID",
+      "description": "仅手动启停：目标账号记录ID",
+      "default": "ecs-1"
+    },
+    "control_confirm": {
+      "type": "input",
+      "title": "手动控制实例确认",
+      "description": "仅手动启停：必须精确匹配完整实例ID",
+      "default": "未设置"
+    },
+    "config_json": {
+      "type": "input",
+      "title": "高级JSON导入",
+      "description": "仅高级多账号导入；普通用户留空，不运行Setup",
+      "default": ""
+    }
+  },
+  "script-providers": {
+    "CDT-Monitor": {
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "interval": 86400
+    },
+    "CDT-Refresh": {
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "interval": 86400
+    },
+    "CDT-History": {
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "interval": 86400
+    },
+    "CDT-Notify-Test": {
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "interval": 86400
+    },
+    "CDT-Start": {
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "interval": 86400
+    },
+    "CDT-Stop": {
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "interval": 86400
+    },
+    "CDT-Setup": {
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-setup.js",
+      "interval": 86400
+    }
+  },
+  "cron": {
+    "script": [
+      {
+        "name": "CDT-Monitor",
+        "cron": "*/10 * * * *",
+        "argument": "{\"config_source\":${args.config_source|json},\"account_id\":${args.account_id|json},\"account_name\":${args.account_name|json},\"access_key_id\":${args.access_key_id|json},\"access_key_secret\":${args.access_key_secret|json},\"region_id\":${args.region_id|json},\"instance_id\":${args.instance_id|json},\"site_type\":${args.site_type|json},\"max_traffic_gib\":${args.max_traffic_gib|json},\"threshold_percent\":${args.threshold_percent|json},\"allow_control\":${args.allow_control|json},\"threshold_action\":${args.threshold_action|json},\"shutdown_mode\":${args.shutdown_mode|json},\"keep_alive\":${args.keep_alive|json},\"schedule_enabled\":${args.schedule_enabled|json},\"start_time\":${args.start_time|json},\"stop_time\":${args.stop_time|json},\"billing\":${args.billing|json},\"daily_report_time\":${args.daily_report_time|json},\"timezone_offset_minutes\":${args.timezone_offset_minutes|json},\"request_timeout_seconds\":${args.request_timeout_seconds|json},\"system_notification\":${args.system_notification|json},\"telegram_enabled\":${args.telegram_enabled|json},\"telegram_base_url\":${args.telegram_base_url|json},\"telegram_bot_token\":${args.telegram_bot_token|json},\"telegram_chat_id\":${args.telegram_chat_id|json},\"webhook_enabled\":${args.webhook_enabled|json},\"webhook_url\":${args.webhook_url|json},\"webhook_authorization\":${args.webhook_authorization|json}}",
+        "timeout": 120
+      }
+    ]
+  },
+  "tiles": [
+    {
+      "name": "CDT-Refresh",
+      "interval": 600,
+      "title": "CDT Monitor · 点击查询",
+      "content": "在覆写参数中填写ID和Secret；普通用户无需Setup",
+      "argument": "{\"config_source\":${args.config_source|json},\"account_id\":${args.account_id|json},\"account_name\":${args.account_name|json},\"access_key_id\":${args.access_key_id|json},\"access_key_secret\":${args.access_key_secret|json},\"region_id\":${args.region_id|json},\"instance_id\":${args.instance_id|json},\"site_type\":${args.site_type|json},\"max_traffic_gib\":${args.max_traffic_gib|json},\"threshold_percent\":${args.threshold_percent|json},\"allow_control\":${args.allow_control|json},\"threshold_action\":${args.threshold_action|json},\"shutdown_mode\":${args.shutdown_mode|json},\"keep_alive\":${args.keep_alive|json},\"schedule_enabled\":${args.schedule_enabled|json},\"start_time\":${args.start_time|json},\"stop_time\":${args.stop_time|json},\"billing\":${args.billing|json},\"daily_report_time\":${args.daily_report_time|json},\"timezone_offset_minutes\":${args.timezone_offset_minutes|json},\"request_timeout_seconds\":${args.request_timeout_seconds|json},\"system_notification\":${args.system_notification|json},\"telegram_enabled\":${args.telegram_enabled|json},\"telegram_base_url\":${args.telegram_base_url|json},\"telegram_bot_token\":${args.telegram_bot_token|json},\"telegram_chat_id\":${args.telegram_chat_id|json},\"webhook_enabled\":${args.webhook_enabled|json},\"webhook_url\":${args.webhook_url|json},\"webhook_authorization\":${args.webhook_authorization|json}}"
+    }
+  ]
+}

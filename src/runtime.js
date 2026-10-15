@@ -25,7 +25,7 @@
     ended = true;
     if (typeof clearTimeout === 'function' && watchdog) clearTimeout(watchdog);
     if (leaseToken) {
-      try { var lock = read(CDT.LOCK_KEY, null); if (lock && lock.token === leaseToken) $persistentStore.write(null, CDT.LOCK_KEY); } catch (_) {}
+      try { var lock = read(CDT.LOCK_KEY, null); if (lock && lock.token === leaseToken) CDTPlatform.releaseLock(CDT.LOCK_KEY); } catch (_) {}
     }
     CDTPlatform.done(result);
   }
@@ -314,8 +314,9 @@
   async function main() {
     var argument = typeof $argument === 'undefined' ? '' : $argument;
     var loonArgs;
-    if (CDTPlatform.loon) {
-      CDT.assert(argument && typeof argument === 'object' && !Array.isArray(argument), '请使用 Loon 插件参数运行');
+    if (CDTPlatform.named) {
+      if (typeof argument === 'string' && CDTPlatform.name === 'Stash') argument = JSON.parse(argument);
+      CDT.assert(argument && typeof argument === 'object' && !Array.isArray(argument), '请使用平台插件参数运行');
       loonArgs = argument;
       argument = {};
       Object.keys(MODULE_PARAMETER_DEFAULTS).forEach(function (key) { if (Object.prototype.hasOwnProperty.call(loonArgs, key)) argument[key] = loonArgs[key]; });
@@ -327,11 +328,11 @@
       return;
     }
     args = moduleSettings ? { op: moduleSettings.op } : parseArgs(argument);
-    if (CDTPlatform.loon && (args.op === 'start' || args.op === 'stop')) {
+    if (CDTPlatform.named && (args.op === 'start' || args.op === 'stop')) {
       args.account = loonArgs.control_account;
       args.confirm = loonArgs.control_confirm;
     }
-    if (!CDTPlatform.loon && typeof $intent !== 'undefined' && $intent && $intent.parameter) {
+    if (!CDTPlatform.named && typeof $intent !== 'undefined' && $intent && $intent.parameter) {
       var input = $intent.parameter;
       var intent;
       try { intent = typeof input === 'string' ? (input.trim().charAt(0) === '{' ? JSON.parse(input) : parseArgs(input)) : input; }

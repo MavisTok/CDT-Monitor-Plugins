@@ -1,12 +1,18 @@
-CDT Monitor 持续更新安装地址
+CDT Monitor Plugins 持续更新安装地址
 
-Surge iOS
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor.sgmodule
+ios
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/surge/CDT-Monitor.sgmodule
 
-Surge Mac
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule
+mac
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule
 
-Loon
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/loon/CDT-Monitor.plugin
+loon
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/loon/CDT-Monitor.plugin
 
-旧根目录来源需迁移到平台子目录。安装入口跟随 main；配套版本标签发布后远程脚本才可下载。
+egern
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/egern/CDT-Monitor.yaml
+
+stash
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/stash/CDT-Monitor.stoverride
+
+旧来源需迁移到新仓库的平台目录。安装入口跟随 main；脚本固定到配套版本标签。
