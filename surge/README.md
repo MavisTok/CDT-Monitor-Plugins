@@ -2,7 +2,7 @@
 
 [返回项目首页](../README.md) · [Loon 插件](../loon/README.md)
 
-## v0.4.0 目录迁移
+## v0.4.1 仓库更名与目录迁移
 
 本平台的模块、脚本和安装说明已移到 `surge/`。旧根目录安装来源需要一次性改为下面的新地址，保留已有参数后更新并应用。开发命令在仓库根目录执行。
 
@@ -14,23 +14,23 @@
 
 ## 通过 URL 快速安装
 
-**v0.4.0：首次在 Surge 的模块管理页选择“从 URL 安装”；以后在原模块中点“更新模块”。旧根目录来源需迁移到下列新地址一次。** Surge 自动下载并缓存脚本，无需手动复制 JS。新地址需发布 main 及 v0.4.0 标签后生效。
+**v0.4.1：首次在 Surge 的模块管理页选择“从 URL 安装”；以后在原模块中点“更新模块”。旧仓库或根目录来源需改为下列新地址。** Surge 自动下载并缓存脚本，无需手动复制 JS。
 
 | 平台 | 模块地址 |
 | --- | --- |
-| iPhone / iPad | [CDT-Monitor.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor.sgmodule) |
-| Mac | [CDT-Monitor-Mac.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule) |
+| iPhone / iPad | [CDT-Monitor.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor.sgmodule) |
+| Mac | [CDT-Monitor-Mac.sgmodule](https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule) |
 
 **iOS：**
 
 ```text
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor.sgmodule
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor.sgmodule
 ```
 
 **Mac：**
 
 ```text
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule
 ```
 
 1. 从上面的 URL 安装对应模块，打开模块参数表，保留 `config_source=module`。
@@ -46,7 +46,7 @@ https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/m
 
 ### 更新与旧版迁移
 
-安装入口使用 `/refs/heads/main/surge/`，模块内 JS 固定到配套发布标签（本版为 `v0.4.0`）；更新模块会同时获取新版脚本引用。模块名称、参数字段和数据 key 保持兼容。旧根目录来源需迁移一次，先保留参数，修改来源后检查并应用；若客户端只能重新安装，填回原参数。
+安装入口使用新仓库的 `/refs/heads/main/surge/`，模块内 JS 固定到配套发布标签（本版为 `v0.4.1`）；更新模块会同时获取新版脚本引用。模块名称、参数字段和数据 key 保持兼容。旧来源先保留参数，修改来源后检查并应用；若客户端只能重新安装，填回原参数。
 
 **如果以前按聊天或旧 Release 说明使用了 `/v0.3.1/`、`/v0.3.2/` 等地址：这些地址固定在旧版本，“更新模块”仍只会下载那个版本。需要一次性把安装来源换成上面的持续更新地址。** 先保留已填写参数；若 Surge 当前版本提供修改来源 URL 的入口，可在原模块中修改。若没有该入口，需要停用旧模块、从持续更新地址安装一次并填回参数。后续不再按版本号重新安装，只启用一份 CDT 模块。仓库更新无法自动更换手机上已保存的安装来源。
 
@@ -58,7 +58,7 @@ https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/m
 
 ### 下载文件安装
 
-不能访问 GitHub Raw 时，从 [Releases](https://github.com/MavisTok/CDT-Monitor_Surge_module/releases) 下载 ZIP；使用 `CDT-Monitor-Local.sgmodule`（iOS）或 `CDT-Monitor-Local-Mac.sgmodule`（Mac），同时将 `cdt-monitor.js`、`cdt-setup.js` 放到 Surge **主配置所在目录**。这两份模块只引用本地文件。详见 [本地安装步骤](安装说明.md#八-本地文件安装备用)。
+不能访问 GitHub Raw 时，从 [标签页](https://github.com/MavisTok/CDT-Monitor-Surge-Loon/tags) 下载对应版本 ZIP；使用 `CDT-Monitor-Local.sgmodule`（iOS）或 `CDT-Monitor-Local-Mac.sgmodule`（Mac），同时将 `cdt-monitor.js`、`cdt-setup.js` 放到 Surge **主配置所在目录**。这两份模块只引用本地文件。详见 [本地安装步骤](安装说明.md#八-本地文件安装备用)。
 
 | 文件 | 用途 |
 | --- | --- |

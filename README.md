@@ -1,4 +1,6 @@
-# CDT Monitor · Surge / Loon
+# CDT Monitor for Surge & Loon
+
+阿里云 CDT 流量监控、通知与 ECS 实例控制插件
 
 在 Surge 或 Loon 本地直接调用阿里云 CDT、ECS、BSS API，查询流量和实例状态，并按配置执行通知与实例启停。无需后台服务、Docker 或数据库。
 
@@ -8,11 +10,11 @@
 
 | 平台 | 使用说明 | 持续更新安装地址 |
 | --- | --- | --- |
-| Surge iOS / iPadOS | [Surge 文档](surge/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor.sgmodule |
-| Surge Mac | [详细安装说明](surge/安装说明.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule |
-| Loon 3.5.1 (983)+ | [Loon 文档](loon/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/loon/CDT-Monitor.plugin |
+| Surge iOS / iPadOS | [Surge 文档](surge/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor.sgmodule |
+| Surge Mac | [详细安装说明](surge/安装说明.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/surge/CDT-Monitor-Mac.sgmodule |
+| Loon 3.5.1 (983)+ | [Loon 文档](loon/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/loon/CDT-Monitor.plugin |
 
-**v0.4.0 改为平台子目录。** 原根目录 Surge 安装来源需迁移一次，保留已有参数后改用上表地址。安装入口跟随 `main`，内部脚本固定到 `v0.4.0`。新地址需要将本次文件和对应版本标签发布到 GitHub 后才能使用；本地构建并不会自动发布。
+**v0.4.1 仓库更名为 `CDT-Monitor-Surge-Loon`；v0.4.0 起按平台分目录。** 旧安装来源请保留已有参数后改用上表地址。安装入口跟随 `main`，内部脚本固定到 `v0.4.1`。以后在原模块或插件中更新即可。GitHub 的旧仓库重定向可用于过渡，建议保存新的安装来源。
 
 ## 功能
 

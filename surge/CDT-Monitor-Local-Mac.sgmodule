@@ -1,5 +1,5 @@
 #!name=CDT Monitor 本地版
-#!desc=v0.4.0 · 直接查询阿里云 CDT/ECS/BSS；在模块参数表中填写账号与监控设置，保存后下次执行生效。
+#!desc=v0.4.1 · 直接查询阿里云 CDT/ECS/BSS；在模块参数表中填写账号与监控设置，保存后下次执行生效。
 #!system=mac
 #!arguments=config_source:module,account_id:ecs-1,account_name:ECS,access_key_id:未设置,access_key_secret:未设置,region_id:cn-hongkong,instance_id:未设置,site_type:china,max_traffic_gib:200,threshold_percent:95,allow_control:false,threshold_action:notify,shutdown_mode:KeepCharging,keep_alive:false,schedule_enabled:false,start_time:08:00,stop_time:23:00,billing:false,daily_report_time:21:00,timezone_offset_minutes:480,request_timeout_seconds:10,system_notification:true,telegram_enabled:false,telegram_base_url:https://api.telegram.org,telegram_bot_token:未设置,telegram_chat_id:未设置,webhook_enabled:false,webhook_url:未设置,webhook_authorization:未设置
 #!arguments-desc=config_source=module 使用本表（单账号实例），local 使用原多账号 JSON。请将 access_key_id、access_key_secret 的“未设置”替换为真实密钥。可选项保留“未设置”，不要清空；instance_id 为“未设置”时仅监控流量；daily_report_time 填“关闭”可停用日报。max_traffic_gib 请填实际额度。开关填写 true/false，时间填写 HH:mm；threshold_action=notify/stop，site_type=china/international。默认关闭控制。参数值不使用竖线、英文双引号或换行。

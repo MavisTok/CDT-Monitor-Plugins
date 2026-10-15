@@ -9,10 +9,10 @@
 在 Loon 的插件管理中添加：
 
 ```text
-https://raw.githubusercontent.com/MavisTok/CDT-Monitor_Surge_module/refs/heads/main/loon/CDT-Monitor.plugin
+https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Surge-Loon/refs/heads/main/loon/CDT-Monitor.plugin
 ```
 
-该入口及内部 `v0.4.0/loon/` 脚本需维护者发布后才可下载。测试未发布代码时，将本目录两个 JS 放到 Loon 可访问的本地脚本目录，复制插件并将两个远程脚本 URL 替换为对应本地路径，再导入本地插件。
+v0.4.1 已改用新仓库名，内部脚本固定到 `v0.4.1/loon/`。原用户保留参数后将插件来源更新为上述地址。测试未发布代码时，将本目录两个 JS 放到 Loon 可访问的本地脚本目录，复制插件并将两个远程脚本 URL 替换为对应本地路径，再导入本地插件。
 
 1. 打开插件参数，保留 `config_source=module`。
 2. 填写 `access_key_id`、`access_key_secret`、`region_id`、`max_traffic_gib`；需要实例查询时填写 `instance_id`。
