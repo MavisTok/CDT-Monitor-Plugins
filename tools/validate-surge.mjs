@@ -25,9 +25,9 @@ const evaluated = spawnSync(cli, ['script', 'evaluate', smoke, 'generic', '10'],
 process.stdout.write('Native Surge smoke test:\n' + evaluated.stdout + evaluated.stderr);
 if (evaluated.status !== 0 || !evaluated.stdout.includes('尚未配置')) process.exit(1);
 const configuredSmoke = path.join(root, '.validation.configured-smoke.js');
-const fakeConfig = { allowControl: true, accounts: [{ id: 'native-test', name: '原生模拟实例', accessKeyId: 'FAKEKEY', accessKeySecret: 'FAKESECRET', regionId: 'cn-hongkong', instanceId: 'i-fake', maxTrafficGiB: 100, thresholdAction: 'stop' }], notifications: { system: false } };
+const fakeConfig = { allowControl: true, accounts: [{ id: 'native-test', name: '原生模拟实例', accessKeyId: 'FAKEKEY', accessKeySecret: 'FAKESECRET', regionId: 'cn-hongkong', instanceId: 'i-fake', maxTrafficGiB: 100, thresholdAction: 'stop', ipv6: true }], notifications: { system: false } };
 const nativeModuleArgument = scriptArgument(fs.readFileSync(path.join(root, 'CDT-Monitor-Mac.sgmodule'), 'utf8'), 'CDT-Monitor', {
-  account_id: 'native-test', account_name: '原生模块参数实例', access_key_id: 'FAKEKEY', access_key_secret: 'FAKESECRET', instance_id: 'i-fake', max_traffic_gib: '100', allow_control: 'true', threshold_action: 'stop', system_notification: 'false'
+  account_id: 'native-test', account_name: '原生模块参数实例', access_key_id: 'FAKEKEY', access_key_secret: 'FAKESECRET', instance_id: 'i-fake', max_traffic_gib: '100', allow_control: 'true', threshold_action: 'stop', system_notification: 'false', ipv6: 'true'
 });
 fs.writeFileSync(configuredSmoke, `(function () {
   var fakeStore = { 'cdt.local.config.v1': ${JSON.stringify(JSON.stringify(fakeConfig))} };
@@ -42,6 +42,12 @@ fs.writeFileSync(configuredSmoke, `(function () {
     else if (params.Action === 'DescribeInstanceStatus') {
       if (params['InstanceId.1'] !== 'i-fake') throw new Error('Instance filtering failed');
       result.InstanceStatuses = { InstanceStatus: [{ InstanceId: 'i-fake', Status: 'Running' }] };
+    } else if (params.Action === 'DescribeInstances') {
+      if (params.InstanceIds !== '["i-fake"]') throw new Error('IPv6 instance filtering failed');
+      result.Instances = { Instance: [{ InstanceId: 'i-fake' }] };
+    } else if (params.Action === 'DescribeNetworkInterfaces') {
+      if (params.InstanceId !== 'i-fake') throw new Error('IPv6 ENI filtering failed');
+      result.NetworkInterfaceSets = { NetworkInterfaceSet: [{ InstanceId: 'i-fake', Type: 'Primary', Ipv6Sets: { Ipv6Set: [{ Primary: true, Ipv6Address: '2001:db8::1' }] } }] };
     } else if (params.Action === 'StopInstance') {
       if (JSON.parse(fakeStore['cdt.local.module-state.v1']).accounts['native-test'].lastControl.status !== 'pending') throw new Error('Control was not reserved');
     } else throw new Error('Unexpected action');
@@ -53,7 +59,7 @@ ${source}
     if (CDT.hmac('key', 'The quick brown fox jumps over the lazy dog') !== '3nybhbi3iqa8ino29wqQcBydtNk=') throw new Error('Native HMAC failed');
   })(mockStore, mockClient, { post: function () { throw new Error('Unexpected notification'); } }, ${JSON.stringify(nativeModuleArgument)}, null, null, 'editor', function (result) {
     var saved = JSON.parse(fakeStore['cdt.local.module-state.v1'] || '{}');
-    if (!saved.accounts || saved.accounts['native-test'].lastControl.status !== 'accepted' || queries.join(',') !== 'ListCdtInternetTraffic,DescribeInstanceStatus,StopInstance') {
+    if (!saved.accounts || saved.accounts['native-test'].lastControl.status !== 'accepted' || saved.accounts['native-test'].ipv6 !== '2001:db8::1' || queries.join(',') !== 'ListCdtInternetTraffic,DescribeInstanceStatus,DescribeInstances,DescribeNetworkInterfaces,StopInstance') {
       realDone({ error: 'Native mock workflow failed', detail: result }); return;
     }
     realDone({ nativeMockPassed: true, queries: queries, panel: result });

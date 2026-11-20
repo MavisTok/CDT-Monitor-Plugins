@@ -12,7 +12,7 @@
 https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/loon/CDT-Monitor.plugin
 ```
 
-v0.5.0 仓库名统一为 CDT-Monitor-Plugins，内部脚本固定到 `v0.5.0/loon/`。原用户保留参数后将插件来源更新为上述地址。测试未发布代码时，将本目录两个 JS 放到 Loon 可访问的本地脚本目录，复制插件并将两个远程脚本 URL 替换为对应本地路径，再导入本地插件。
+v0.5.0 仓库名统一为 CDT-Monitor-Plugins，当前内部脚本固定到 `v0.5.1/loon/`。原用户保留参数后将插件来源更新为上述地址。测试未发布代码时，将本目录两个 JS 放到 Loon 可访问的本地脚本目录，复制插件并将两个远程脚本 URL 替换为对应本地路径，再导入本地插件。
 
 1. 打开插件参数，保留 `config_source=module`。
 2. 填写 `access_key_id`、`access_key_secret`、`region_id`、`max_traffic_gib`；需要实例查询时填写 `instance_id`。

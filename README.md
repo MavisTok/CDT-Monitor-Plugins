@@ -14,7 +14,7 @@
 | Egern（原生 ctx API） | [Egern](egern/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/egern/CDT-Monitor.yaml |
 | Stash iOS/tvOS 3.7+、Mac 4.4+（参数功能 Beta） | [Stash](stash/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/stash/CDT-Monitor.stoverride |
 
-**v0.5.0 仓库统一更名为 `CDT-Monitor-Plugins`。** 保留旧模块的参数后，更新安装来源为上表地址。安装入口跟随 `main`，内部脚本固定到 `v0.5.0`；模块文件与对应版本标签均发布后才可下载。旧仓库重定向只用于过渡，推荐保存新地址。
+**v0.5.0 仓库统一更名为 `CDT-Monitor-Plugins`。** 保留旧模块的参数后，更新安装来源为上表地址。安装入口跟随 `main`，内部脚本固定到 `v0.5.1`；模块文件与对应版本标签均发布后才可下载。旧仓库重定向只用于过渡，推荐保存新地址。
 
 ## 第一次使用
 
@@ -28,11 +28,14 @@
 
 - CDT 国内/海外分类用量、额度、阈值告警与 ECS 精确实例状态。
 - 可选余额和月度实例账单；本地小时/日历史与操作日志。
+- 可选实例 IPv6 展示：模块参数设置 `ipv6=true`，多账号 JSON 在对应账号中设置 `"ipv6": true`；默认关闭。
 - 系统、Telegram、Webhook 通知，失败重试和日报。
 - 可选阈值停机、计划启停、实例保活及显式手动控制，默认只读。
 - 单账号表单配置；高级 JSON 支持 1–8 条账号/实例记录。
 
 CDT 是**阿里云账号分类汇总**，不是单台 ECS 的独立用量，也不是本机代理流量。启停要求本轮成功查询流量与目标实例状态；失败保留缓存并显示错误，不以缺失数据启动实例。
+
+IPv6 功能需要 `ecs:DescribeInstances` 权限；实例未直接返回 IPv6 时，还需要 `ecs:DescribeNetworkInterfaces` 及对应网卡资源的读取权限。查询优先主网卡及主 IPv6，补查最多 10 页且总限时 3 秒；失败保留旧地址并标记缓存，不影响状态查询或自动控制。成功确认无地址时清除旧缓存。地址保存在客户端本地，请注意设备隐私。
 
 Surge 有原生面板，Loon 用 Generic 返回内容，Egern 用 Widget DSL，Stash 用 Tile。面板/Widget/Tile 只查询，不执行手动启停或自动策略。定时监控默认每 10 分钟运行，受到设备后台状态、VPN 连接、网络及云端统计延迟影响。
 

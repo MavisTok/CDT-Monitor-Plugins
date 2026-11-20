@@ -1,8 +1,30 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
-const { execFileSync } = require('node:child_process');
+const { createHash } = require('node:crypto');
+const { execFileSync, spawnSync } = require('node:child_process');
 const pkg = require('../package.json');
+
+test('existing release tags contain the exact runtime loaded by remote modules', async t => {
+  const path = require('node:path');
+  const root = path.resolve(__dirname, '..');
+  const { releaseInfo } = await import('../tools/release-info.mjs');
+  const { tag } = releaseInfo(pkg);
+  const ref = 'refs/tags/' + tag;
+  if (spawnSync('git', ['rev-parse', '--verify', ref], { cwd: root }).status !== 0) {
+    t.skip('Release tag is not available locally; fetch it before publishing.');
+    return;
+  }
+  for (const platform of ['surge', 'loon', 'egern', 'stash']) {
+    for (const file of ['cdt-monitor.js', 'cdt-setup.js']) {
+      const asset = platform + '/' + file;
+      const published = execFileSync('git', ['show', ref + ':' + asset], { cwd: root, encoding: 'utf8' });
+      const digest = value => createHash('sha256').update(value).digest('hex');
+      assert.equal(digest(fs.readFileSync(path.join(root, asset))), digest(published),
+        asset + ' differs from ' + tag + '; bump the version and rebuild before publishing modules.');
+    }
+  }
+});
 
 test('version upgrades keep module installation URLs stable while advancing runtime URLs', async () => {
   const { releaseInfo } = await import('../tools/release-info.mjs');

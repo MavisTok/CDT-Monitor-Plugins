@@ -18,7 +18,7 @@ async function run({ name = 'CDT-Refresh', env = {}, store = new Map(), cron, wi
       if (failure) throw new Error('testSecret');
       const p = Object.fromEntries(new URLSearchParams(options.body));
       if (!p.Action && hookFailure) throw new Error('offline');
-      const json = p.Action === 'ListCdtInternetTraffic' ? { TrafficDetails: [{ BusinessRegionId: 'cn-hongkong', Traffic: C.GiB * 10 }] } : p.Action === 'DescribeInstanceStatus' ? { InstanceStatuses: { InstanceStatus: [{ InstanceId: 'i-test', Status: 'Running' }] } } : {};
+      const json = p.Action === 'ListCdtInternetTraffic' ? { TrafficDetails: [{ BusinessRegionId: 'cn-hongkong', Traffic: C.GiB * 10 }] } : p.Action === 'DescribeInstanceStatus' ? { InstanceStatuses: { InstanceStatus: [{ InstanceId: 'i-test', Status: 'Running' }] } } : p.Action === 'DescribeInstances' ? { Instances: { Instance: [{ InstanceId: 'i-test', Ipv6Address: '2001:db8::5' }] } } : {};
       return { status: 200, text: async () => JSON.stringify({ RequestId: 'mock', ...json }) };
     } }
   };
@@ -36,6 +36,10 @@ test('Egern native ctx wrapper returns Widget DSL, milliseconds and strict HTTP 
     assert.equal(options.timeout, 10000); assert.equal(options.redirect, 'manual');
     assert.equal(options.credentials, 'omit'); assert.equal(options.insecureTls, false);
   }
+});
+test('Egern displays the optional IPv6 address', async () => {
+  const r = await run({ env: { ipv6: 'true' } });
+  assert.match(JSON.stringify(r.result), /2001:db8::5/);
 });
 test('Egern schedule executes shared policy and returns no widget', async () => {
   const r = await run({ name: 'CDT-Monitor', cron: '*/10 * * * *', env: { allow_control: 'true', threshold_action: 'stop', max_traffic_gib: '5' } });

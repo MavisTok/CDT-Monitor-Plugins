@@ -1,6 +1,6 @@
 {
   "name": "CDT Monitor",
-  "desc": "v0.5.0 · 阿里云CDT监控。填好AccessKey ID与Secret并保存后查询；普通用户不运行Setup。刷新与面板只查询；Monitor每10分钟执行已启用的自动策略。History查看日志；Notify-Test测试通知；Start/Stop手动启停；Setup只导入完整高级JSON。 参数表要求iOS/tvOS 3.7+或macOS 4.4+（Beta）。手动启停只能在编辑器执行，切勿添加到Tile或定时任务。",
+  "desc": "v0.5.1 · 阿里云CDT监控。填好AccessKey ID与Secret并保存后查询；普通用户不运行Setup。刷新与面板只查询；Monitor每10分钟执行已启用的自动策略。History查看日志；Notify-Test测试通知；Start/Stop手动启停；Setup只导入完整高级JSON。 参数表要求iOS/tvOS 3.7+或macOS 4.4+（Beta）。手动启停只能在编辑器执行，切勿添加到Tile或定时任务。",
   "arguments-version": 1,
   "arguments": {
     "config_source": {
@@ -111,6 +111,12 @@
       "description": "余额与账单查询 true / false",
       "default": "false"
     },
+    "ipv6": {
+      "type": "input",
+      "title": "查询实例IPv6",
+      "description": "查询实例 IPv6 和网卡，需要 ECS 查询权限 true / false",
+      "default": "false"
+    },
     "daily_report_time": {
       "type": "input",
       "title": "日报时间",
@@ -198,31 +204,31 @@
   },
   "script-providers": {
     "CDT-Monitor": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Refresh": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-History": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Notify-Test": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Start": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Stop": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Setup": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-setup.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-setup.js",
       "interval": 86400
     }
   },
@@ -231,7 +237,7 @@
       {
         "name": "CDT-Monitor",
         "cron": "*/10 * * * *",
-        "argument": "{\"config_source\":${args.config_source|json},\"account_id\":${args.account_id|json},\"account_name\":${args.account_name|json},\"access_key_id\":${args.access_key_id|json},\"access_key_secret\":${args.access_key_secret|json},\"region_id\":${args.region_id|json},\"instance_id\":${args.instance_id|json},\"site_type\":${args.site_type|json},\"max_traffic_gib\":${args.max_traffic_gib|json},\"threshold_percent\":${args.threshold_percent|json},\"allow_control\":${args.allow_control|json},\"threshold_action\":${args.threshold_action|json},\"shutdown_mode\":${args.shutdown_mode|json},\"keep_alive\":${args.keep_alive|json},\"schedule_enabled\":${args.schedule_enabled|json},\"start_time\":${args.start_time|json},\"stop_time\":${args.stop_time|json},\"billing\":${args.billing|json},\"daily_report_time\":${args.daily_report_time|json},\"timezone_offset_minutes\":${args.timezone_offset_minutes|json},\"request_timeout_seconds\":${args.request_timeout_seconds|json},\"system_notification\":${args.system_notification|json},\"telegram_enabled\":${args.telegram_enabled|json},\"telegram_base_url\":${args.telegram_base_url|json},\"telegram_bot_token\":${args.telegram_bot_token|json},\"telegram_chat_id\":${args.telegram_chat_id|json},\"webhook_enabled\":${args.webhook_enabled|json},\"webhook_url\":${args.webhook_url|json},\"webhook_authorization\":${args.webhook_authorization|json}}",
+        "argument": "{\"config_source\":${args.config_source|json},\"account_id\":${args.account_id|json},\"account_name\":${args.account_name|json},\"access_key_id\":${args.access_key_id|json},\"access_key_secret\":${args.access_key_secret|json},\"region_id\":${args.region_id|json},\"instance_id\":${args.instance_id|json},\"site_type\":${args.site_type|json},\"max_traffic_gib\":${args.max_traffic_gib|json},\"threshold_percent\":${args.threshold_percent|json},\"allow_control\":${args.allow_control|json},\"threshold_action\":${args.threshold_action|json},\"shutdown_mode\":${args.shutdown_mode|json},\"keep_alive\":${args.keep_alive|json},\"schedule_enabled\":${args.schedule_enabled|json},\"start_time\":${args.start_time|json},\"stop_time\":${args.stop_time|json},\"billing\":${args.billing|json},\"ipv6\":${args.ipv6|json},\"daily_report_time\":${args.daily_report_time|json},\"timezone_offset_minutes\":${args.timezone_offset_minutes|json},\"request_timeout_seconds\":${args.request_timeout_seconds|json},\"system_notification\":${args.system_notification|json},\"telegram_enabled\":${args.telegram_enabled|json},\"telegram_base_url\":${args.telegram_base_url|json},\"telegram_bot_token\":${args.telegram_bot_token|json},\"telegram_chat_id\":${args.telegram_chat_id|json},\"webhook_enabled\":${args.webhook_enabled|json},\"webhook_url\":${args.webhook_url|json},\"webhook_authorization\":${args.webhook_authorization|json}}",
         "timeout": 120
       }
     ]
@@ -242,7 +248,7 @@
       "interval": 600,
       "title": "CDT Monitor · 点击查询",
       "content": "在覆写参数中填写ID和Secret；普通用户无需Setup",
-      "argument": "{\"config_source\":${args.config_source|json},\"account_id\":${args.account_id|json},\"account_name\":${args.account_name|json},\"access_key_id\":${args.access_key_id|json},\"access_key_secret\":${args.access_key_secret|json},\"region_id\":${args.region_id|json},\"instance_id\":${args.instance_id|json},\"site_type\":${args.site_type|json},\"max_traffic_gib\":${args.max_traffic_gib|json},\"threshold_percent\":${args.threshold_percent|json},\"allow_control\":${args.allow_control|json},\"threshold_action\":${args.threshold_action|json},\"shutdown_mode\":${args.shutdown_mode|json},\"keep_alive\":${args.keep_alive|json},\"schedule_enabled\":${args.schedule_enabled|json},\"start_time\":${args.start_time|json},\"stop_time\":${args.stop_time|json},\"billing\":${args.billing|json},\"daily_report_time\":${args.daily_report_time|json},\"timezone_offset_minutes\":${args.timezone_offset_minutes|json},\"request_timeout_seconds\":${args.request_timeout_seconds|json},\"system_notification\":${args.system_notification|json},\"telegram_enabled\":${args.telegram_enabled|json},\"telegram_base_url\":${args.telegram_base_url|json},\"telegram_bot_token\":${args.telegram_bot_token|json},\"telegram_chat_id\":${args.telegram_chat_id|json},\"webhook_enabled\":${args.webhook_enabled|json},\"webhook_url\":${args.webhook_url|json},\"webhook_authorization\":${args.webhook_authorization|json}}"
+      "argument": "{\"config_source\":${args.config_source|json},\"account_id\":${args.account_id|json},\"account_name\":${args.account_name|json},\"access_key_id\":${args.access_key_id|json},\"access_key_secret\":${args.access_key_secret|json},\"region_id\":${args.region_id|json},\"instance_id\":${args.instance_id|json},\"site_type\":${args.site_type|json},\"max_traffic_gib\":${args.max_traffic_gib|json},\"threshold_percent\":${args.threshold_percent|json},\"allow_control\":${args.allow_control|json},\"threshold_action\":${args.threshold_action|json},\"shutdown_mode\":${args.shutdown_mode|json},\"keep_alive\":${args.keep_alive|json},\"schedule_enabled\":${args.schedule_enabled|json},\"start_time\":${args.start_time|json},\"stop_time\":${args.stop_time|json},\"billing\":${args.billing|json},\"ipv6\":${args.ipv6|json},\"daily_report_time\":${args.daily_report_time|json},\"timezone_offset_minutes\":${args.timezone_offset_minutes|json},\"request_timeout_seconds\":${args.request_timeout_seconds|json},\"system_notification\":${args.system_notification|json},\"telegram_enabled\":${args.telegram_enabled|json},\"telegram_base_url\":${args.telegram_base_url|json},\"telegram_bot_token\":${args.telegram_bot_token|json},\"telegram_chat_id\":${args.telegram_chat_id|json},\"webhook_enabled\":${args.webhook_enabled|json},\"webhook_url\":${args.webhook_url|json},\"webhook_authorization\":${args.webhook_authorization|json}}"
     }
   ]
 }

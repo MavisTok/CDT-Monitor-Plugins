@@ -56,7 +56,7 @@ CDT.parseModuleArguments = function (argument) {
       regionId: values.region_id, instanceId: values.instance_id, siteType: values.site_type,
       maxTrafficGiB: number('max_traffic_gib'), thresholdPercent: number('threshold_percent'),
       thresholdAction: values.threshold_action, shutdownMode: values.shutdown_mode,
-      keepAlive: boolean('keep_alive'), billing: boolean('billing'),
+      keepAlive: boolean('keep_alive'), billing: boolean('billing'), ipv6: boolean('ipv6'),
       schedule: { enabled: boolean('schedule_enabled'), start: values.start_time, stop: values.stop_time }
     }]
   });
