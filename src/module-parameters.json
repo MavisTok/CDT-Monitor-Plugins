@@ -17,6 +17,7 @@
   { "key": "start_time", "default": "08:00", "description": "定时启动 HH:mm" },
   { "key": "stop_time", "default": "23:00", "description": "定时停止 HH:mm" },
   { "key": "billing", "default": "false", "description": "余额与账单查询 true / false" },
+  { "key": "ipv6", "default": "false", "description": "查询实例 IPv6 和网卡，需要 ECS 查询权限 true / false" },
   { "key": "daily_report_time", "default": "21:00", "description": "日报 HH:mm；填写关闭可停用日报" },
   { "key": "timezone_offset_minutes", "default": "480", "description": "业务时区相对 UTC 的分钟偏移" },
   { "key": "request_timeout_seconds", "default": "10", "description": "请求超时 3–15 秒" },

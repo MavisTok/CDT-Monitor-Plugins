@@ -89,6 +89,7 @@ var CDT = (function () {
       assert(['china', 'international'].indexOf(a.siteType) >= 0, 'siteType 必须是 china/international');
       booleanField(a, 'keepAlive', false);
       booleanField(a, 'billing', false);
+      booleanField(a, 'ipv6', false);
       if (a.schedule === undefined) a.schedule = { enabled: false };
       assert(plain(a.schedule), 'schedule 必须是对象');
       booleanField(a.schedule, 'enabled', false);

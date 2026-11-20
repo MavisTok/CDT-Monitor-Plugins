@@ -87,6 +87,7 @@ var CDT = (function () {
       assert(['china', 'international'].indexOf(a.siteType) >= 0, 'siteType 必须是 china/international');
       booleanField(a, 'keepAlive', false);
       booleanField(a, 'billing', false);
+      booleanField(a, 'ipv6', false);
       if (a.schedule === undefined) a.schedule = { enabled: false };
       assert(plain(a.schedule), 'schedule 必须是对象');
       booleanField(a.schedule, 'enabled', false);
@@ -310,7 +311,7 @@ var CDTPlatform = (function () {
   };
 })();
 
-var MODULE_PARAMETER_DEFAULTS = {"config_source":"module","account_id":"ecs-1","account_name":"ECS","access_key_id":"未设置","access_key_secret":"未设置","region_id":"cn-hongkong","instance_id":"未设置","site_type":"china","max_traffic_gib":"200","threshold_percent":"95","allow_control":"false","threshold_action":"notify","shutdown_mode":"KeepCharging","keep_alive":"false","schedule_enabled":"false","start_time":"08:00","stop_time":"23:00","billing":"false","daily_report_time":"21:00","timezone_offset_minutes":"480","request_timeout_seconds":"10","system_notification":"true","telegram_enabled":"false","telegram_base_url":"https://api.telegram.org","telegram_bot_token":"未设置","telegram_chat_id":"未设置","webhook_enabled":"false","webhook_url":"未设置","webhook_authorization":"未设置"};
+var MODULE_PARAMETER_DEFAULTS = {"config_source":"module","account_id":"ecs-1","account_name":"ECS","access_key_id":"未设置","access_key_secret":"未设置","region_id":"cn-hongkong","instance_id":"未设置","site_type":"china","max_traffic_gib":"200","threshold_percent":"95","allow_control":"false","threshold_action":"notify","shutdown_mode":"KeepCharging","keep_alive":"false","schedule_enabled":"false","start_time":"08:00","stop_time":"23:00","billing":"false","ipv6":"false","daily_report_time":"21:00","timezone_offset_minutes":"480","request_timeout_seconds":"10","system_notification":"true","telegram_enabled":"false","telegram_base_url":"https://api.telegram.org","telegram_bot_token":"未设置","telegram_chat_id":"未设置","webhook_enabled":"false","webhook_url":"未设置","webhook_authorization":"未设置"};
 /* Parameter transport uses | separators, not query-string decoding: URLs with &,
  * tokens with +/= and literal percent signs remain intact after Surge substitution.
  * MODULE_PARAMETER_DEFAULTS is generated from module-parameters.json at build time. */
@@ -369,7 +370,7 @@ CDT.parseModuleArguments = function (argument) {
       regionId: values.region_id, instanceId: values.instance_id, siteType: values.site_type,
       maxTrafficGiB: number('max_traffic_gib'), thresholdPercent: number('threshold_percent'),
       thresholdAction: values.threshold_action, shutdownMode: values.shutdown_mode,
-      keepAlive: boolean('keep_alive'), billing: boolean('billing'),
+      keepAlive: boolean('keep_alive'), billing: boolean('billing'), ipv6: boolean('ipv6'),
       schedule: { enabled: boolean('schedule_enabled'), start: values.start_time, stop: values.stop_time }
     }]
   });
@@ -425,7 +426,7 @@ CDT.parseModuleArguments = function (argument) {
         if (error) { reject(new Error('网络请求失败或超时')); return; }
         var result;
         try { result = JSON.parse(data); } catch (_) { reject(new Error('接口返回非 JSON 数据（HTTP ' + (response && response.status) + '）')); return; }
-        if (!response || response.status < 200 || response.status >= 300) {
+        if (!response || typeof response.status !== 'number' || !isFinite(response.status) || response.status < 200 || response.status >= 300) {
           var code = result && result.Code;
           reject(new Error('接口 HTTP ' + (response && response.status) + (typeof code === 'string' && /^[A-Za-z0-9_.-]{1,100}$/.test(code) ? ' / ' + code : '')));
           return;
@@ -522,10 +523,75 @@ CDT.parseModuleArguments = function (argument) {
     Object.keys(settings.headers).forEach(function (key) { headers[key] = settings.headers[key]; });
     return new Promise(function (resolve, reject) {
       $httpClient.post(CDTPlatform.request({ url: settings.url, headers: headers, body: JSON.stringify({ source: 'cdt-monitor-' + CDTPlatform.name.toLowerCase(), id: event.key, title: event.title, body: event.body, at: event.at }), timeout: config.requestTimeoutSeconds, 'auto-redirect': false, 'auto-cookie': false }), function (error, response) {
-        if (error || !response || response.status < 200 || response.status >= 300 || ended) reject(new Error('Webhook 发送失败'));
+        if (error || !response || typeof response.status !== 'number' || !isFinite(response.status) || response.status < 200 || response.status >= 300 || ended) reject(new Error('Webhook 发送失败'));
         else resolve();
       });
     });
+  }
+  function ipv6Address(value) {
+    if (typeof value === 'string') return value.indexOf(':') >= 0 ? value : '';
+    if (Array.isArray(value)) {
+      for (var i = 0; i < value.length; i++) { var found = ipv6Address(value[i]); if (found) return found; }
+    } else if (value && typeof value === 'object') {
+      var keys = ['Ipv6Address', 'IpAddress', 'Ipv6Addresses', 'Ipv6AddressSet', 'Ipv6Set'];
+      for (var k = 0; k < keys.length; k++) { var address = ipv6Address(value[keys[k]]); if (address) return address; }
+    }
+    return '';
+  }
+  function interfaceIPv6(interfaces) {
+    for (var primary = 1; primary >= 0; primary--) {
+      for (var i = 0; i < interfaces.length; i++) {
+        var nic = interfaces[i];
+        if ((nic.Type === 'Primary' ? 1 : 0) !== primary) continue;
+        var entries = nic.Ipv6Sets && nic.Ipv6Sets.Ipv6Set;
+        if (Array.isArray(entries)) {
+          for (var j = 0; j < entries.length; j++) if (entries[j] && entries[j].Primary === true && ipv6Address(entries[j])) return ipv6Address(entries[j]);
+        }
+        var address = ipv6Address(entries);
+        if (address) return address;
+      }
+    }
+    return '';
+  }
+  async function lookupIPv6(a, expires) {
+    var result = await ecs(a, 'DescribeInstances', { RegionId: a.regionId, InstanceIds: JSON.stringify([a.instanceId]), 'AdditionalAttributes.1': 'NETWORK_PRIMARY_ENI_IP' });
+    CDT.assert(Date.now() < expires, 'IPv6 查询超时');
+    var list = result.Instances && result.Instances.Instance;
+    if (!Array.isArray(list)) list = list && typeof list === 'object' ? [list] : [];
+    var instance = list.filter(function (item) { return item && item.InstanceId === a.instanceId; })[0];
+    CDT.assert(instance, 'IPv6 查询未返回目标实例');
+    var interfaces = Array.isArray(instance.NetworkInterface) ? instance.NetworkInterface : (instance.NetworkInterfaces && instance.NetworkInterfaces.NetworkInterface) || [];
+    var address = ipv6Address(instance.Ipv6Address) || ipv6Address(instance.Ipv6Addresses) || interfaceIPv6(Array.isArray(interfaces) ? interfaces : []);
+    if (address) return address;
+    var all = [], tokens = Object.create(null), token = '';
+    for (var page = 0; page < 10; page++) {
+      CDT.assert(Date.now() < expires, 'IPv6 查询超时');
+      var params = { RegionId: a.regionId, InstanceId: a.instanceId, MaxResults: '100' };
+      if (token) params.NextToken = token;
+      var response = await ecs(a, 'DescribeNetworkInterfaces', params);
+      CDT.assert(Date.now() < expires, 'IPv6 查询超时');
+      var nics = response.NetworkInterfaceSets && response.NetworkInterfaceSets.NetworkInterfaceSet;
+      CDT.assert(Array.isArray(nics), 'IPv6 网卡响应格式无效');
+      nics.forEach(function (nic) {
+        CDT.assert(nic && typeof nic === 'object' && !Array.isArray(nic), 'IPv6 网卡数据无效');
+        if (!nic.InstanceId || nic.InstanceId === a.instanceId) all.push(nic);
+      });
+      CDT.assert(response.NextToken === undefined || typeof response.NextToken === 'string', 'IPv6 分页格式无效');
+      token = response.NextToken || '';
+      if (!token) return interfaceIPv6(all);
+      CDT.assert(!tokens[token], 'IPv6 分页重复');
+      tokens[token] = true;
+    }
+    throw new Error('IPv6 网卡分页超过上限');
+  }
+  async function refreshIPv6(a, record) {
+    var timer;
+    try {
+      var expires = Date.now() + 3000;
+      var address = await Promise.race([lookupIPv6(a, expires), new Promise(function (_, reject) { timer = setTimeout(function () { reject(new Error('IPv6 查询超时')); }, 3000); })]);
+      guard(); record.ipv6 = address; record.ipv6At = new Date().toISOString(); record.ipv6Error = '';
+    } catch (e) { record.ipv6Error = safe(e); }
+    finally { if (timer) clearTimeout(timer); }
   }
   async function refresh(accounts) {
     var trafficRequests = {};
@@ -542,7 +608,8 @@ CDT.parseModuleArguments = function (argument) {
         }).catch(function (e) { record.trafficError = safe(e); }),
         a.instanceId ? ecs(a, 'DescribeInstanceStatus', { RegionId: a.regionId, 'InstanceId.1': a.instanceId, PageSize: '50' }).then(function (r) {
           guard(); record.status = CDT.instanceStatus(r, a.instanceId); record.statusAt = new Date().toISOString(); record.statusFresh = true; record.statusError = '';
-        }).catch(function (e) { record.statusError = safe(e); }) : Promise.resolve().then(function () { record.status = '未配置实例'; record.statusError = ''; })
+        }).catch(function (e) { record.statusError = safe(e); }) : Promise.resolve().then(function () { record.status = '未配置实例'; record.statusError = ''; }),
+        a.ipv6 && a.instanceId ? refreshIPv6(a, record) : Promise.resolve()
       ]);
     }));
     guard(); save();
@@ -676,9 +743,10 @@ CDT.parseModuleArguments = function (argument) {
       alert = alert || (typeof r.trafficGiB === 'number' && CDT.over(a, r.trafficGiB));
       var statusNames = { Running: '运行中', Stopped: '已停止', Starting: '启动中', Stopping: '停止中', Unknown: '未知' };
       lines.push(a.name + ' · ' + label + '账号汇总\n' + usage + '\n实例：' + (statusNames[r.status] || r.status) + (r.manualPause ? ' · 手动暂停自动启动' : ''));
+      if (a.ipv6 && a.instanceId) lines.push('IPv6：' + (r.ipv6 || (r.ipv6At ? '无' : '暂无数据')) + (r.ipv6Error ? '（缓存）' : ''));
       if (r.billing) lines.push('余额 ' + r.billing.balance.toFixed(2) + ' ' + r.billing.currency + (r.billing.instanceCost !== null ? ' · 本月实例账单 ' + r.billing.instanceCost.toFixed(2) + ' ' + r.billing.billCurrency : '') + '（缓存；' + CDT.local(r.billing.at, config.timezoneOffsetMinutes).label + '）');
       if (r.trafficAt) lines.push('流量时间 ' + CDT.local(Date.parse(r.trafficAt), config.timezoneOffsetMinutes).label);
-      var errors = [r.trafficError, r.statusError, r.controlError, r.billingError].filter(Boolean);
+      var errors = [r.trafficError, r.statusError, r.controlError, r.billingError, a.ipv6 && r.ipv6Error ? 'IPv6：' + r.ipv6Error : ''].filter(Boolean);
       if (errors.length) { error = true; lines.push('⚠ ' + errors.join('；') + '（旧数据仅供参考）'); }
     });
     if (state.outbox.length) lines.push('待重试通知：' + state.outbox.length);

@@ -14,7 +14,7 @@ async function run({ c = config(), store = storage(c), op = 'panel', argument, h
   const requests = [], notifications = [], logs = [], timers = new Set();
   let calls = 0;
   const result = await new Promise((resolve, reject) => {
-    const outer = setTimeout(() => reject(new Error('Mock runtime timed out')), 2500);
+    const outer = setTimeout(() => reject(new Error('Mock runtime timed out')), 5000);
     const globals = {
       $argument: argument === undefined ? 'op=' + op : argument, $trigger: trigger, $input: input,
       $intent: intent ? { parameter: intent } : undefined,
@@ -37,7 +37,8 @@ async function run({ c = config(), store = storage(c), op = 'panel', argument, h
             const json = params.Action === 'ListCdtInternetTraffic' ? { TrafficDetails: [{ BusinessRegionId: 'cn-hongkong', Traffic: C.GiB * 10 }] } : params.Action === 'DescribeInstanceStatus' ? { InstanceStatuses: { InstanceStatus: [{ InstanceId: 'i-test', Status: 'Running' }] } } : {};
             reply = { json: { RequestId: 'mock-request', ...json } };
           }
-          queueMicrotask(() => callback(reply.error || null, { status: reply.status || 200 }, reply.raw !== undefined ? reply.raw : JSON.stringify(reply.json)));
+          if (reply.never) return;
+          queueMicrotask(() => callback(reply.error || null, Object.hasOwn(reply, 'response') ? reply.response : { status: reply.status ?? 200 }, reply.raw !== undefined ? reply.raw : JSON.stringify(reply.json)));
         } catch (e) { clearTimeout(outer); reject(e); }
       } },
       console: { log: value => logs.push(value) },
@@ -95,6 +96,61 @@ test('panel queries exact ECS ID and does not perform control or notifications',
   assert.equal(r.requests.find(r => r.params.Action === 'DescribeInstanceStatus').params['InstanceId.1'], 'i-test');
   assert.equal(r.notifications.length, 0); assert.match(r.result.content, /96.00/);
 });
+test('IPv6 reads instance address without an ENI lookup', async () => {
+  const c = config(); c.accounts[0].ipv6 = true;
+  const r = await run({ c, handler: p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test', Ipv6Address: { IpAddress: ['2001:db8::1'] } }] } } } : undefined });
+  assert.equal(r.state.accounts.hk.ipv6, '2001:db8::1');
+  assert.match(r.result.content, /IPv6：2001:db8::1/);
+  assert.equal(r.requests.some(x => x.params.Action === 'DescribeNetworkInterfaces'), false);
+  assert.equal(r.requests.find(x => x.params.Action === 'DescribeInstances').params['AdditionalAttributes.1'], 'NETWORK_PRIMARY_ENI_IP');
+});
+test('IPv6 paginates ENIs, ignores other instances and prefers primary addresses', async () => {
+  const c = config(); c.accounts[0].ipv6 = true;
+  const r = await run({ c, handler: p => {
+    if (p.Action === 'DescribeInstances') return { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test' }] } } };
+    if (p.Action === 'DescribeNetworkInterfaces') return { json: { RequestId: 'mock', NextToken: p.NextToken ? '' : 'next', NetworkInterfaceSets: { NetworkInterfaceSet: p.NextToken ? [{ InstanceId: 'i-test', Type: 'Primary', Ipv6Sets: { Ipv6Set: [{ Ipv6Address: '2001:db8::3' }, { Primary: true, Ipv6Address: '2001:db8::4' }] } }] : [{ InstanceId: 'i-other', Type: 'Primary', Ipv6Sets: { Ipv6Set: [{ Ipv6Address: '2001:db8::bad' }] } }, { Type: 'Secondary', Ipv6Sets: { Ipv6Set: [{ Ipv6Address: '2001:db8::2' }] } }] } } };
+  } });
+  assert.equal(r.state.accounts.hk.ipv6, '2001:db8::4');
+  assert.equal(r.requests.filter(x => x.params.Action === 'DescribeNetworkInterfaces').length, 2);
+});
+test('IPv6 failures preserve cached address and do not block status or control', async () => {
+  const c = config({ allowControl: true }); c.accounts[0].ipv6 = true; c.accounts[0].keepAlive = true;
+  const first = await run({ c, handler: p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test', Ipv6Address: '2001:db8::1' }] } } } : undefined });
+  const r = await run({ c, store: first.store, op: 'monitor', handler: p => {
+    if (p.Action === 'DescribeInstances') return { status: 403, json: { Code: 'Forbidden' } };
+    if (p.Action === 'DescribeInstanceStatus') return { json: { RequestId: 'mock', InstanceStatuses: { InstanceStatus: [{ InstanceId: 'i-test', Status: 'Stopped' }] } } };
+  } });
+  assert.equal(r.state.accounts.hk.ipv6, '2001:db8::1');
+  assert.match(r.result.content, /IPv6：2001:db8::1（缓存）/);
+  assert.equal(r.requests.filter(x => x.params.Action === 'StartInstance').length, 1);
+});
+test('IPv6 empty result clears old address but malformed and repeated pages retain it', async () => {
+  const c = config(); c.accounts[0].ipv6 = true;
+  const first = await run({ c, handler: p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test', Ipv6Address: '2001:db8::1' }] } } } : undefined });
+  for (const bad of [{ NetworkInterfaceSets: {} }, { NetworkInterfaceSets: { NetworkInterfaceSet: [] }, NextToken: 'repeat' }]) {
+    const r = await run({ c, store: first.store, handler: p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test' }] } } } : p.Action === 'DescribeNetworkInterfaces' ? { json: { RequestId: 'mock', ...bad } } : undefined });
+    assert.equal(r.state.accounts.hk.ipv6, '2001:db8::1'); assert.ok(r.state.accounts.hk.ipv6Error);
+  }
+  const r = await run({ c, store: first.store, handler: p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test' }] } } } : p.Action === 'DescribeNetworkInterfaces' ? { json: { RequestId: 'mock', NetworkInterfaceSets: { NetworkInterfaceSet: [] } } } : undefined });
+  assert.equal(r.state.accounts.hk.ipv6, ''); assert.match(r.result.content, /IPv6：无/);
+});
+test('IPv6 timeout is bounded and does not block status refresh', async () => {
+  const c = config(); c.accounts[0].ipv6 = true;
+  const r = await run({ c, handler: p => p.Action === 'DescribeInstances' ? { never: true } : undefined });
+  assert.equal(r.state.accounts.hk.status, 'Running');
+  assert.match(r.state.accounts.hk.ipv6Error, /超时/);
+});
+test('IPv6 rejects a response for a different instance', async () => {
+  const c = config(); c.accounts[0].ipv6 = true;
+  const r = await run({ c, handler: p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-other', Ipv6Address: '2001:db8::1' }] } } } : undefined });
+  assert.equal(r.state.accounts.hk.ipv6, undefined);
+  assert.match(r.state.accounts.hk.ipv6Error, /目标实例/);
+  assert.equal(r.requests.some(x => x.params.Action === 'DescribeNetworkInterfaces'), false);
+});
+test('module IPv6 parameter enables the optional lookup', async () => {
+  const r = await run({ c: null, argument: await moduleArgument({ ipv6: 'true' }), handler: p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test', Ipv6Address: '2001:db8::5' }] } } } : undefined });
+  assert.match(r.result.content, /IPv6：2001:db8::5/);
+});
 test('monitor threshold stop reserves and persists action before HTTP', async () => {
   const c = config({ allowControl: true }); c.accounts[0].thresholdAction = 'stop';
   const r = await run({ c, op: 'monitor', handler: (p, _, store) => {
@@ -115,6 +171,16 @@ test('failed traffic preserves cache and blocks both keepalive and threshold sto
   assert.equal(r.state.accounts.hk.trafficGiB, 10); assert.equal(r.state.accounts.hk.trafficFresh, false);
   assert.equal(r.requests.some(r => /^(Start|Stop)Instance$/.test(r.params.Action)), false);
   assert.match(r.result.content, /旧数据/); assert.equal(JSON.stringify(r.result).includes('testSecret'), false);
+});
+test('missing or invalid HTTP status cannot authorize instance control', async () => {
+  for (const response of [null, {}, { status: '200' }, { status: NaN }, { status: 0 }]) {
+    const c = config({ allowControl: true }); c.accounts[0].keepAlive = true;
+    const r = await run({ c, op: 'monitor', handler: p => p.Action === 'ListCdtInternetTraffic'
+      ? { response, json: { RequestId: 'mock', TrafficDetails: [{ BusinessRegionId: 'cn-hongkong', Traffic: C.GiB * 10 }] } }
+      : { json: { RequestId: 'mock', InstanceStatuses: { InstanceStatus: [{ InstanceId: 'i-test', Status: 'Stopped' }] } } } });
+    assert.equal(r.state.accounts.hk.trafficFresh, false);
+    assert.equal(r.requests.some(item => /^(Start|Stop)Instance$/.test(item.params.Action)), false);
+  }
 });
 test('missing and empty traffic responses never become zero or trigger start', async () => {
   for (const json of [{ RequestId: 'mock' }, { RequestId: 'mock', TrafficDetails: [] }]) {
@@ -168,6 +234,14 @@ test('failed webhook remains in outbox and retries without duplicate local notif
   assert.equal(r.state.outbox.length, 1); assert.equal(r.notifications.length, 1);
   const next = await run({ c, store: r.store, op: 'monitor', handler: (p, o) => o.url.includes('example.invalid') ? { status: 204, raw: '' } : undefined });
   assert.equal(next.state.outbox.length, 0); assert.equal(next.notifications.length, 0);
+});
+test('webhook with invalid HTTP status remains queued', async () => {
+  for (const response of [null, {}, { status: '204' }, { status: NaN }, { status: 0 }]) {
+    const c = config(); c.notifications.webhook = { enabled: true, url: 'https://example.invalid/hook', headers: {} };
+    const r = await run({ c, op: 'test-notify', handler: (p, o) => o.url.includes('example.invalid') ? { response, raw: '' } : undefined });
+    assert.equal(r.state.outbox.length, 1);
+    assert.deepEqual(r.state.outbox[0].channels, ['webhook']);
+  }
 });
 test('setup preserves prior configuration when validation fails and backs up on success', async () => {
   const c = config(), store = storage(c), original = store.get(C.CONFIG_KEY);
@@ -331,6 +405,13 @@ const stashRuntime = fs.readFileSync(require.resolve('../stash/cdt-monitor.js'),
 function runStash(options = {}) {
   return run({ source: stashRuntime, stashName: 'CDT-Refresh', argument: JSON.stringify(loonArgument()), ...options });
 }
+test('Loon and Stash pass the IPv6 parameter through to shared runtime', async () => {
+  const handler = p => p.Action === 'DescribeInstances' ? { json: { RequestId: 'mock', Instances: { Instance: [{ InstanceId: 'i-test', Ipv6Address: '2001:db8::5' }] } } } : undefined;
+  const loon = await runLoon({ argument: loonArgument({ ipv6: 'true' }), handler });
+  const stash = await runStash({ argument: JSON.stringify(loonArgument({ ipv6: 'true' })), handler });
+  assert.match(JSON.stringify(loon.result), /2001:db8::5/);
+  assert.match(JSON.stringify(stash.result), /2001:db8::5/);
+});
 test('Stash Tile forces read-only, uses seconds and string-only lease release', async () => {
   const r = await runStash({ stashName: 'CDT-Stop', stashType: 'tile', argument: JSON.stringify(loonArgument({ allow_control: 'true', control_account: 'ecs-1', control_confirm: 'i-test' })) });
   assert.match(r.result.content, /10.00/);
