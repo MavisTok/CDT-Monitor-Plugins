@@ -1,6 +1,6 @@
 {
   "name": "CDT Monitor",
-  "desc": "v0.5.0 · 阿里云CDT监控。填好AccessKey ID与Secret并保存后查询；普通用户不运行Setup。刷新与面板只查询；Monitor每10分钟执行已启用的自动策略。History查看日志；Notify-Test测试通知；Start/Stop手动启停；Setup只导入完整高级JSON。 参数表要求iOS/tvOS 3.7+或macOS 4.4+（Beta）。手动启停只能在编辑器执行，切勿添加到Tile或定时任务。",
+  "desc": "v0.5.1 · 阿里云CDT监控。填好AccessKey ID与Secret并保存后查询；普通用户不运行Setup。刷新与面板只查询；Monitor每10分钟执行已启用的自动策略。History查看日志；Notify-Test测试通知；Start/Stop手动启停；Setup只导入完整高级JSON。 参数表要求iOS/tvOS 3.7+或macOS 4.4+（Beta）。手动启停只能在编辑器执行，切勿添加到Tile或定时任务。",
   "arguments-version": 1,
   "arguments": {
     "config_source": {
@@ -113,7 +113,7 @@
     },
     "ipv6": {
       "type": "input",
-      "title": "ipv6",
+      "title": "查询实例IPv6",
       "description": "查询实例 IPv6 和网卡，需要 ECS 查询权限 true / false",
       "default": "false"
     },
@@ -204,31 +204,31 @@
   },
   "script-providers": {
     "CDT-Monitor": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Refresh": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-History": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Notify-Test": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Start": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Stop": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-monitor.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-monitor.js",
       "interval": 86400
     },
     "CDT-Setup": {
-      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/stash/cdt-setup.js",
+      "url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/stash/cdt-setup.js",
       "interval": 86400
     }
   },

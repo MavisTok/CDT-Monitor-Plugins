@@ -14,7 +14,7 @@
 | Egern（原生 ctx API） | [Egern](egern/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/egern/CDT-Monitor.yaml |
 | Stash iOS/tvOS 3.7+、Mac 4.4+（参数功能 Beta） | [Stash](stash/README.md) | https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/refs/heads/main/stash/CDT-Monitor.stoverride |
 
-**v0.5.0 仓库统一更名为 `CDT-Monitor-Plugins`。** 保留旧模块的参数后，更新安装来源为上表地址。安装入口跟随 `main`，内部脚本固定到 `v0.5.0`；模块文件与对应版本标签均发布后才可下载。旧仓库重定向只用于过渡，推荐保存新地址。
+**v0.5.0 仓库统一更名为 `CDT-Monitor-Plugins`。** 保留旧模块的参数后，更新安装来源为上表地址。安装入口跟随 `main`，内部脚本固定到 `v0.5.1`；模块文件与对应版本标签均发布后才可下载。旧仓库重定向只用于过渡，推荐保存新地址。
 
 ## 第一次使用
 

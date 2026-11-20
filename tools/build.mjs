@@ -62,7 +62,7 @@ const labels = {
   max_traffic_gib: '流量额度GiB', threshold_percent: '告警阈值百分比', allow_control: '实例控制总开关',
   threshold_action: '达到阈值后的操作', shutdown_mode: '停机模式', keep_alive: '实例保活',
   schedule_enabled: '定时启停开关', start_time: '每天启动时间', stop_time: '每天停止时间',
-  billing: '查询余额与账单', daily_report_time: '日报时间', timezone_offset_minutes: '时区偏移分钟',
+  billing: '查询余额与账单', ipv6: '查询实例IPv6', daily_report_time: '日报时间', timezone_offset_minutes: '时区偏移分钟',
   request_timeout_seconds: '请求超时秒数', system_notification: '系统通知开关',
   telegram_enabled: 'Telegram通知开关', telegram_base_url: 'Telegram接口地址',
   telegram_bot_token: 'Telegram机器人Token', telegram_chat_id: 'Telegram接收者ID',

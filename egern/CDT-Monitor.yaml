@@ -1,6 +1,6 @@
 {
   "name": "CDT Monitor",
-  "description": "v0.5.0 · 阿里云CDT监控。填好AccessKey ID与Secret并保存后查询；普通用户不运行Setup。刷新与面板只查询；Monitor每10分钟执行已启用的自动策略。History查看日志；Notify-Test测试通知；Start/Stop手动启停；Setup只导入完整高级JSON。",
+  "description": "v0.5.1 · 阿里云CDT监控。填好AccessKey ID与Secret并保存后查询；普通用户不运行Setup。刷新与面板只查询；Monitor每10分钟执行已启用的自动策略。History查看日志；Notify-Test测试通知；Start/Stop手动启停；Setup只导入完整高级JSON。",
   "homepage": "https://github.com/MavisTok/CDT-Monitor-Plugins",
   "manual": "https://github.com/MavisTok/CDT-Monitor-Plugins/blob/main/egern/README.md",
   "env_schema": {
@@ -95,7 +95,7 @@
       "default_value": "false"
     },
     "ipv6": {
-      "name": "ipv6",
+      "name": "查询实例IPv6",
       "description": "查询实例 IPv6 和网卡，需要 ECS 查询权限 true / false",
       "default_value": "false"
     },
@@ -175,7 +175,7 @@
       "schedule": {
         "name": "CDT-Monitor",
         "cron": "*/10 * * * *",
-        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/egern/cdt-monitor.js",
+        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/egern/cdt-monitor.js",
         "timeout": 120,
         "update_interval": 86400,
         "env": {
@@ -215,7 +215,7 @@
     {
       "generic": {
         "name": "CDT-Refresh",
-        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/egern/cdt-monitor.js",
+        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/egern/cdt-monitor.js",
         "timeout": 120,
         "update_interval": 86400,
         "env": {
@@ -255,7 +255,7 @@
     {
       "generic": {
         "name": "CDT-History",
-        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/egern/cdt-monitor.js",
+        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/egern/cdt-monitor.js",
         "timeout": 120,
         "update_interval": 86400,
         "env": {
@@ -295,7 +295,7 @@
     {
       "generic": {
         "name": "CDT-Notify-Test",
-        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/egern/cdt-monitor.js",
+        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/egern/cdt-monitor.js",
         "timeout": 120,
         "update_interval": 86400,
         "env": {
@@ -335,7 +335,7 @@
     {
       "generic": {
         "name": "CDT-Start",
-        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/egern/cdt-monitor.js",
+        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/egern/cdt-monitor.js",
         "timeout": 120,
         "update_interval": 86400,
         "env": {
@@ -377,7 +377,7 @@
     {
       "generic": {
         "name": "CDT-Stop",
-        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/egern/cdt-monitor.js",
+        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/egern/cdt-monitor.js",
         "timeout": 120,
         "update_interval": 86400,
         "env": {
@@ -419,7 +419,7 @@
     {
       "generic": {
         "name": "CDT-Setup",
-        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.0/egern/cdt-setup.js",
+        "script_url": "https://raw.githubusercontent.com/MavisTok/CDT-Monitor-Plugins/v0.5.1/egern/cdt-setup.js",
         "timeout": 10,
         "update_interval": 86400,
         "env": {
